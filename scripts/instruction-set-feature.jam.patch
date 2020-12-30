@@ -1,0 +1,11 @@
+--- tools/build/src/tools/features/instruction-set-feature.jam	2020-08-11 16:57:21.000000000 +0200
++++ tools/build/src/tools/features/instruction-set-feature.jam.new	2020-09-11 22:17:18.000000000 +0200
+@@ -57,7 +57,7 @@
+ 
+         # Advanced RISC Machines
+         armv2 armv2a armv3 armv3m armv4 armv4t armv5 armv5t armv5te armv6 armv6j iwmmxt ep9312
+-        armv7 armv7s
++        armv7 armv7s arm64
+ 
+         # z Systems (aka s390x)
+         z196 zEC12 z13 z14 z15

@@ -1,0 +1,7 @@
+/.DS_STORE
+scripts/.DS_Store
+/boost*
+/frameworks
+/scripts/ICUdep.xcworkspace
+/scripts/Pods
+/scripts/Podfile.lock

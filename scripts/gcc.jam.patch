@@ -1,0 +1,17 @@
+--- tools/build/src/tools/gcc.jam	2020-09-11 21:35:20.000000000 +0200
++++ tools/build/src/tools/gcc.jam.new	2020-09-11 21:10:29.000000000 +0200
+@@ -460,12 +460,13 @@
+     threading-flags <target-os>cygwin  : -mthreads ;
+     threading-flags <target-os>solaris  : -pthreads : rt ;
+     threading-flags <target-os>qnx : -pthread ;
++    threading-flags <target-os>iphone : -pthread ;
+ 
+     local bsd = [ MATCH ^(.*bsd)$ : $(all-os) ] ;
+     threading-flags <target-os>$(bsd) : -pthread ;
+ 
+     local no-threading = android beos haiku sgi darwin vxworks ;
+-    local threading-generic-os = [ set.difference $(all-os) : $(no-threading) $(bsd) windows cygwin solaris qnx ] ;
++    local threading-generic-os = [ set.difference $(all-os) : $(no-threading) $(bsd) windows cygwin solaris qnx iphone ] ;
+     threading-flags <target-os>$(threading-generic-os) : -pthread : rt ;
+ }
+ 
