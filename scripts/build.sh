@@ -12,7 +12,8 @@ BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if [[ -d ~/projects/pod_projects/boost/frameworks ]]; then
-	ln -s ~/projects/pod_projects/boost/frameworks $BUILD_DIR/
+	#ln -s ~/projects/pod_projects/boost/frameworks $BUILD_DIR/
+	cp -r ~/projects/pod_projects/boost/frameworks $BUILD_DIR/
 fi
 if [ ! -d "$BUILD_DIR/frameworks" ]; then
 
