@@ -11,6 +11,9 @@ BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+if [ ! -d "~/projects/pod_projects/boost/frameworks_" ]; then
+	cp -r "~/projects/pod_projects/boost/frameworks_" "$BUILD_DIR/frameworks"
+else
 if [ ! -d "$BUILD_DIR/frameworks" ]; then
 
 if [[ $HOST_ARC == arm* ]]; then
@@ -187,4 +190,5 @@ rm -rf "$BUILD_DIR/boost"
 
 popd
 
+fi
 fi
