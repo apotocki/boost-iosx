@@ -11,8 +11,8 @@ BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-if [[ -L "~/projects/pod_projects/boost/frameworks" ]]; then
-	ln -s ~/projects/pod_projects/boost/frameworks "$BUILD_DIR/"
+if [ -d "~/projects/pod_projects/boost/frameworks" ]; then
+	ln -s "~/projects/pod_projects/boost/frameworks" "$BUILD_DIR/"
 else
 if [ ! -d "$BUILD_DIR/frameworks" ]; then
 
