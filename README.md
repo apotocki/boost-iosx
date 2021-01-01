@@ -37,8 +37,8 @@ graph_parallel, mpi, python
 ``` 
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log'
-    pod 'boost-iosx/program_options'
+    pod 'boost-iosx/log', '1.75.0'
+    pod 'boost-iosx/program_options', '1.75.0'
     # note: Some libraries have dependencies on other Boost libraries. In that case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:
