@@ -31,7 +31,7 @@ graph_parallel, mpi, python
  - Use cocoapods. Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx'
+    pod 'boost-iosx', '1.75.0'
     # or optionally more precisely
     # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :branch => '1.75.0'
 ``` 
