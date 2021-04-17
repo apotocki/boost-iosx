@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.75.0
+BOOST_VER=1.76.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -11,7 +11,7 @@ BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-if [ ! -d "$BUILD_DIR/frameworks" ]; then
+if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
 
 if [[ $HOST_ARC == arm* ]]; then
 	BOOST_ARC=arm
@@ -64,12 +64,14 @@ else
 fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
+if false; then
 if [ ! -f tools/build/src/build/configure.jam.orig ]; then
 	cp -f tools/build/src/build/configure.jam tools/build/src/build/configure.jam.orig
 else
 	cp -f tools/build/src/build/configure.jam.orig tools/build/src/build/configure.jam
 fi
 patch tools/build/src/build/configure.jam $SCRIPT_DIR/configure.jam.patch
+fi
 
 LIBS_TO_BUILD="--with-locale"
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave"
@@ -101,13 +103,14 @@ fi
 if [ -d stage ]; then
 	rm -rf stage
 fi
+fi
 
 if true; then
 cp $ICU_PATH/frameworks/icudata.xcframework/macos-$HOST_ARC/libicudata.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icui18n.xcframework/macos-$HOST_ARC/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/macos-$HOST_ARC/libicuuc.a $ICU_PATH/lib/
 ./b2 -j8 --stagedir=stage/macosx cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" target-os=darwin address-model=64 architecture=$BOOST_ARC $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-
+rm -rf bin.v2
 fi
 
 if true; then
@@ -115,6 +118,7 @@ cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib
 cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
 ./b2 -j8 --stagedir=stage/ios cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-ios address-model=64 instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+rm -rf bin.v2
 fi
 
 if true; then
@@ -122,8 +126,7 @@ cp $ICU_PATH/frameworks/icudata.xcframework/ios-$HOST_ARC-simulator/libicudata.a
 cp $ICU_PATH/frameworks/icui18n.xcframework/ios-$HOST_ARC-simulator/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/ios-$HOST_ARC-simulator/libicuuc.a $ICU_PATH/lib/
 ./b2 -j8 --stagedir=stage/iossim cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-iossim address-model=64 architecture=$BOOST_ARC target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-fi
-
+rm -rf bin.v2
 fi
 
 echo installing boost...
@@ -132,13 +135,11 @@ if [ -d "$BUILD_DIR/frameworks" ]; then
 fi
 
 mkdir "$BUILD_DIR/frameworks"
-mkdir "$BUILD_DIR/frameworks/Headers"
-mv boost "$BUILD_DIR/frameworks/Headers/"
+
 
 build_xcframework()
 {
 	xcodebuild -create-xcframework -library stage/macosx/lib/lib$1.a -library stage/ios/lib/lib$1.a -library stage/iossim/lib/lib$1.a -output "$BUILD_DIR/frameworks/$1.xcframework"
-
 }
 
 if true; then
@@ -181,6 +182,11 @@ build_xcframework boost_thread
 build_xcframework boost_timer
 build_xcframework boost_type_erasure
 build_xcframework boost_wave
+
+mkdir "$BUILD_DIR/frameworks/Headers"
+#cp -R boost "$BUILD_DIR/frameworks/Headers/"
+mv boost "$BUILD_DIR/frameworks/Headers/"
+touch "$BUILD_DIR/frameworks.built"
 fi
 
 rm -rf "$BUILD_DIR/boost"
