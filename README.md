@@ -1,6 +1,6 @@
 # Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
-Supported versions: 1.76.0, 1.75.0 (use the appropriate tag to select the version)
+Supported versions: 1.76.0, 1.75.0 (use the appropriate tag or branch to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
 The latest supported Boost version is taken from: https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.bz2
