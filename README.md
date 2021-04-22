@@ -1,6 +1,6 @@
 # Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
-Supported version: 1.76.0 (use the appropriate tag to select the version)
+Supported versions: 1.76.0, 1.75.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
 The latest supported Boost version is taken from: https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.bz2
@@ -24,7 +24,7 @@ graph_parallel, mpi, python
  - Manually
 ```
     # clone the repo
-    git clone -b 1.76.0.1 https://github.com/apotocki/boost-iosx
+    git clone https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
@@ -36,14 +36,14 @@ graph_parallel, mpi, python
  - Use cocoapods. Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '1.76.0.1'
+    pod 'boost-iosx'
     # or optionally more precisely
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.76.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx'
 ``` 
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '1.76.0.1'
-    pod 'boost-iosx/program_options', '1.75.0.1'
+    pod 'boost-iosx/log'
+    pod 'boost-iosx/program_options'
     # note: Some libraries have dependencies on other Boost libraries. In that case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:
