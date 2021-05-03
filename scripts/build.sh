@@ -24,7 +24,7 @@ else
 fi
 
 if [ ! -f $BOOST_NAME.tar.bz2 ]; then
-	curl -L https://dl.bintray.com/boostorg/release/$BOOST_VER/source/$BOOST_NAME.tar.bz2 -o $BOOST_NAME.tar.bz2
+	curl -L https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VER/source/$BOOST_NAME.tar.bz2 -o $BOOST_NAME.tar.bz2
 fi
 if [ ! -d boost ]; then
 	echo "extracting $BOOST_NAME.tar.bz2 ..."
