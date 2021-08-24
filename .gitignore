@@ -5,3 +5,4 @@ scripts/.DS_Store
 /scripts/ICUdep.xcworkspace
 /scripts/Pods
 /scripts/Podfile.lock
+/frameworks.built

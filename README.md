@@ -1,9 +1,9 @@
 # Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
-Supported version: 1.76.0 (use the appropriate tag to select the version)
+Supported version: 1.77.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
-The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2
+The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_77_0.tar.bz2
 
 ## Building libraries
 atomic, chrono, container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, wave
@@ -15,6 +15,7 @@ graph_parallel, mpi, python
   1) Xcode must be installed because xcodebuild is used to create xcframeworks
   2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
   ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
+  3) You should not have your own user-config.jam file in your home directory!
 
 ## Building notes
 1) Libraries 'locale' and 'regex' are being built with ICU backend. ICU build scripts are being taken from https://github.com/apotocki/icu4c-iosx and run with the help of 'pod' utility.
@@ -24,7 +25,7 @@ graph_parallel, mpi, python
  - Manually
 ```
     # clone the repo
-    git clone -b 1.76.0.1 https://github.com/apotocki/boost-iosx
+    git clone -b 1.77.0 https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
@@ -36,14 +37,14 @@ graph_parallel, mpi, python
  - Use cocoapods. Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '1.76.0.1'
-    # or optionally more precisely
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.76.0.1'
+    pod 'boost-iosx', '~> 1.77.0'
+    # or optionally more precisely e.g.:
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.77.0.1'
 ``` 
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '1.76.0.1'
-    pod 'boost-iosx/program_options', '1.75.0.1'
+    pod 'boost-iosx/log', '~> 1.77.0'
+    pod 'boost-iosx/program_options', '~> 1.77.0'
     # note: Some libraries have dependencies on other Boost libraries. In that case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:

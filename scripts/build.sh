@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.76.0
+BOOST_VER=1.77.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer

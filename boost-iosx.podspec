@@ -1,12 +1,12 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.76.0.2"
+    s.version      = "1.77.0.1"
     s.summary      = "Boost C++ libraries"
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"
     s.author       = { "Alexander Pototskiy" => "alex.a.potocki@gmail.com" }
     s.social_media_url = "https://www.linkedin.com/in/alexander-pototskiy"
-    s.osx.deployment_target = "11.0"
+    s.osx.deployment_target = "10.0"
     s.ios.deployment_target = "10.0"
     s.osx.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
     s.ios.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
