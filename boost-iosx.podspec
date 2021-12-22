@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.77.0.1"
+    s.version      = "1.78.0.1"
     s.summary      = "Boost C++ libraries"
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"

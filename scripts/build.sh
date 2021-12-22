@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.77.0
+BOOST_VER=1.78.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -52,12 +52,13 @@ pushd boost
 
 echo patching boost...
 
-if [ ! -f tools/build/src/tools/gcc.jam.orig ]; then
-	cp -f tools/build/src/tools/gcc.jam tools/build/src/tools/gcc.jam.orig
+
+if [ ! -f tools/build/src/tools/stage.jam.orig ]; then
+	cp -f tools/build/src/tools/stage.jam tools/build/src/tools/stage.jam.orig
 else
-	cp -f tools/build/src/tools/gcc.jam.orig tools/build/src/tools/gcc.jam
+	cp -f tools/build/src/tools/stage.jam.orig tools/build/src/tools/stage.jam
 fi
-patch tools/build/src/tools/gcc.jam $SCRIPT_DIR/gcc.jam.patch
+patch tools/build/src/tools/stage.jam $SCRIPT_DIR/0001-b2-fix-install.patch
 
 if [ ! -f tools/build/src/tools/features/instruction-set-feature.jam.orig ]; then
 	cp -f tools/build/src/tools/features/instruction-set-feature.jam tools/build/src/tools/features/instruction-set-feature.jam.orig
@@ -66,16 +67,8 @@ else
 fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
-if false; then
-if [ ! -f tools/build/src/build/configure.jam.orig ]; then
-	cp -f tools/build/src/build/configure.jam tools/build/src/build/configure.jam.orig
-else
-	cp -f tools/build/src/build/configure.jam.orig tools/build/src/build/configure.jam
-fi
-patch tools/build/src/build/configure.jam $SCRIPT_DIR/configure.jam.patch
-fi
 
-#LIBS_TO_BUILD="--with-locale"
+#LIBS_TO_BUILD="--with-fiber"
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave"
 
 B2_BUILD_OPTIONS="release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE"
