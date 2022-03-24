@@ -98,7 +98,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : catalyst : clang++ -arch $HOST_ARC --target=$BOOST_ARC-apple-ios13-macabi -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
+using darwin : catalyst : clang++ -arch $HOST_ARC --target=$BOOST_ARC-apple-ios-macabi -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
 : <striper> <root>$MACSYSROOT
 : <architecture>$BOOST_ARC
 ;
