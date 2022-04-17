@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.78.0
+BOOST_VER=1.79.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -41,6 +41,7 @@ fi
 ############### ICU
 if [ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]; then
 	pushd $SCRIPT_DIR
+    pod repo update
 	pod install --verbose
 	popd
 	mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
@@ -53,12 +54,17 @@ pushd boost
 echo patching boost...
 
 
-if [ ! -f tools/build/src/tools/stage.jam.orig ]; then
-	cp -f tools/build/src/tools/stage.jam tools/build/src/tools/stage.jam.orig
+if [ ! -f boost/json/impl/array.ipp.orig ]; then
+	cp -f boost/json/impl/array.ipp boost/json/impl/array.ipp.orig
 else
-	cp -f tools/build/src/tools/stage.jam.orig tools/build/src/tools/stage.jam
+	cp -f boost/json/impl/array.ipp.orig boost/json/impl/array.ipp
 fi
-patch tools/build/src/tools/stage.jam $SCRIPT_DIR/0001-b2-fix-install.patch
+if [ ! -f libs/json/test/array.cpp.orig ]; then
+	cp -f libs/json/test/array.cpp libs/json/test/array.cpp.orig
+else
+	cp -f libs/json/test/array.cpp.orig libs/json/test/array.cpp
+fi
+patch < $SCRIPT_DIR/0001-json-array-erase-relocate.patch
 
 if [ ! -f tools/build/src/tools/features/instruction-set-feature.jam.orig ]; then
 	cp -f tools/build/src/tools/features/instruction-set-feature.jam tools/build/src/tools/features/instruction-set-feature.jam.orig
