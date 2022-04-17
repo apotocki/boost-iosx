@@ -1,5 +1,5 @@
---- boost/json/impl/array.ipp	2022-04-06 17:02:43.000000000 -0400
-+++ boost/json/impl/array.ipp	2022-04-13 20:55:20.464359478 -0400
+--- boost/json/impl/array.ipp
++++ boost/json/impl/array.ipp
 @@ -491,8 +491,11 @@
      auto const p = &(*t_)[0] +
          (pos - &(*t_)[0]);
@@ -13,8 +13,8 @@
      return p;
  }
  
---- libs/json/test/array.cpp	2022-04-06 17:02:43.000000000 -0400
-+++ libs/json/test/array.cpp	2022-04-13 20:53:32.671782680 -0400
+--- libs/json/test/array.cpp
++++ libs/json/test/array.cpp
 @@ -1270,6 +1270,21 @@
      }
  

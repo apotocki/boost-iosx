@@ -64,7 +64,7 @@ if [ ! -f libs/json/test/array.cpp.orig ]; then
 else
 	cp -f libs/json/test/array.cpp.orig libs/json/test/array.cpp
 fi
-patch < $SCRIPT_DIR/0001-json-array-erase-relocate.patch
+patch -p0 <$SCRIPT_DIR/0001-json-array-erase-relocate.patch
 
 if [ ! -f tools/build/src/tools/features/instruction-set-feature.jam.orig ]; then
 	cp -f tools/build/src/tools/features/instruction-set-feature.jam tools/build/src/tools/features/instruction-set-feature.jam.orig
