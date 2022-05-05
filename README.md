@@ -53,12 +53,12 @@ Then install new dependencies:
 ```    
 
 ## As an advertisement…
-Boost libraries built by this project were used in my iOS application on App Store:
+Boost libraries built by this project have been used in my iOS application on App Store:
 
 [<table align="center" border=0 cellspacing=0 cellpadding=0><tr><td><img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70"/></td><td><a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br>HEX File Viewer & Editor</td><tr></table>]()
 
-This app is designed for viewing and editing files at byte or character level.
+This app is designed for inspecting and editing files at the byte or character level.
   
 You can support my open-source development by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
 
-Feedbacks are also welcome!
+Feedback is welcome!
