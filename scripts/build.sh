@@ -17,11 +17,16 @@ if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
 
 if [[ $HOST_ARC == arm* ]]; then
 	BOOST_ARC=arm
+	FOREIGN_ARC=x86_64
+	FOREIGN_BOOST_ARC=x86
 elif [[ $HOST_ARC == x86* ]]; then
 	BOOST_ARC=x86
+	FOREIGN_ARC=arm64
+	FOREIGN_BOOST_ARC=arm
 else
 	BOOST_ARC=unknown
 fi
+
 
 if [ ! -f $BOOST_NAME.tar.bz2 ]; then
 	curl -L https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VER/source/$BOOST_NAME.tar.bz2 -o $BOOST_NAME.tar.bz2
@@ -74,6 +79,7 @@ fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
 
+
 #LIBS_TO_BUILD="--with-fiber"
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave"
 
@@ -99,21 +105,32 @@ cp $ICU_PATH/frameworks/icuuc.xcframework/macos-$HOST_ARC/libicuuc.a $ICU_PATH/l
 rm -rf bin.v2
 fi
 
-if true; then
+# <binary-format>mach-o <threading>multi <abi>sysv
+build_catalyst_libs()
+{
 if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : catalyst : clang++ -arch $HOST_ARC --target=$BOOST_ARC-apple-ios-macabi -miphoneos-version-min=15 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
+using darwin : catalyst : clang++ -arch $1 --target=$2-apple-ios13.4-macabi -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
 : <striper> <root>$MACSYSROOT
-: <architecture>$BOOST_ARC
+: <architecture>$3 
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/ios-$HOST_ARC-maccatalyst/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/ios-$HOST_ARC-maccatalyst/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/ios-$HOST_ARC-maccatalyst/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/catalyst cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-catalyst address-model=64 architecture=$BOOST_ARC $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
+./b2 -j8 --stagedir=stage/catalyst-$1 cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" abi=$4 toolset=darwin-catalyst address-model=64 architecture=$3 $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
+}
+
+if true; then
+	if [ -d stage/catalyst/lib ]; then
+		rm -rf stage/catalyst/lib
+	fi
+	mkdir -p stage/catalyst/lib
+	build_catalyst_libs arm64 arm arm aapcs
+	build_catalyst_libs x86_64 x86_64 x86 sysv
 fi
 
 if true; then
@@ -121,7 +138,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : ios : clang++ -arch arm64 -fembed-bitcode-marker -isysroot $DEVSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=15.0
+using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $DEVSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=13.4
 : <striper> <root>$DEVSYSROOT 
 : <architecture>arm <target-os>iphone 
 ;
@@ -133,21 +150,31 @@ cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
 rm -rf bin.v2
 fi
 
-if true; then
+build_sim_libs()
+{
 if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : iossim : clang++ -arch $HOST_ARC -fembed-bitcode-marker -isysroot $SIMSYSROOT/SDKs/iPhoneSimulator.sdk -mios-simulator-version-min=15.0
+using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $SIMSYSROOT/SDKs/iPhoneSimulator.sdk -mios-simulator-version-min=13.4
 : <striper> <root>$SIMSYSROOT 
-: <architecture>$BOOST_ARC <target-os>iphone 
+: <architecture>$2 <target-os>iphone 
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/ios-$HOST_ARC-simulator/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/ios-$HOST_ARC-simulator/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/ios-$HOST_ARC-simulator/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/iossim cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-iossim address-model=64 architecture=$BOOST_ARC target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
+./b2 -j8 --stagedir=stage/iossim-$1 cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-iossim abi=$3 address-model=64 architecture=$2 target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
+}
+
+if true; then
+	if [ -d stage/iossim/lib ]; then
+		rm -rf stage/iossim/lib
+	fi
+	mkdir -p stage/iossim/lib
+	build_sim_libs arm64 arm aapcs
+	build_sim_libs x86_64 x86 sysv
 fi
 
 echo installing boost...
@@ -157,8 +184,13 @@ fi
 
 mkdir "$BUILD_DIR/frameworks"
 
+
+
 build_xcframework()
 {
+	lipo -create stage/catalyst-$HOST_ARC/lib/lib$1.a stage/catalyst-$FOREIGN_ARC/lib/lib$1.a -output stage/catalyst/lib/lib$1.a
+	lipo -create stage/iossim-$HOST_ARC/lib/lib$1.a stage/iossim-$FOREIGN_ARC/lib/lib$1.a -output stage/iossim/lib/lib$1.a
+
 	xcodebuild -create-xcframework -library stage/macosx/lib/lib$1.a -library stage/catalyst/lib/lib$1.a -library stage/ios/lib/lib$1.a -library stage/iossim/lib/lib$1.a -output "$BUILD_DIR/frameworks/$1.xcframework"
 }
 
@@ -209,7 +241,7 @@ cp -R boost "$BUILD_DIR/frameworks/Headers/"
 touch "$BUILD_DIR/frameworks.built"
 fi
 
-rm -rf "$BUILD_DIR/boost"
+#rm -rf "$BUILD_DIR/boost"
 
 popd
 
