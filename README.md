@@ -1,9 +1,9 @@
 # Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
-Supported version: 1.79.0 (use the appropriate tag to select the version)
+Supported version: 1.80.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
-The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.bz2
+The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2
 
 ## Building libraries
 atomic, chrono, container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, wave
@@ -25,7 +25,7 @@ graph_parallel, mpi, python
  - Manually
 ```
     # clone the repo
-    git clone -b 1.79.0 https://github.com/apotocki/boost-iosx
+    git clone -b 1.80.0 https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
@@ -37,14 +37,14 @@ graph_parallel, mpi, python
  - Use cocoapods. Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '~> 1.79.0'
+    pod 'boost-iosx', '~> 1.80.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.79.0.3'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.80.0.1'
 ``` 
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '~> 1.79.0'
-    pod 'boost-iosx/program_options', '~> 1.79.0'
+    pod 'boost-iosx/log', '~> 1.80.0'
+    pod 'boost-iosx/program_options', '~> 1.80.0'
     # note: Some libraries have dependencies on other Boost libraries. In that case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:
@@ -53,12 +53,12 @@ Then install new dependencies:
 ```    
 
 ## As an advertisement…
-Boost libraries built by this project were used in my iOS application on App Store:
+The Boost libraries built by this project are used in my iOS application on the App Store:
 
 [<table align="center" border=0 cellspacing=0 cellpadding=0><tr><td><img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70"/></td><td><a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br>HEX File Viewer & Editor</td><tr></table>]()
 
-This app is designed for viewing and editing files at byte or character level.
+This app is designed for viewing and editing files at the byte or character level.
   
 You can support my open-source development by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
 
-Feedbacks are also welcome!
+Feedback is welcome!

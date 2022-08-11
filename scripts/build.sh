@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.79.0
+BOOST_VER=1.80.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -17,12 +17,8 @@ if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
 
 if [[ $HOST_ARC == arm* ]]; then
 	BOOST_ARC=arm
-	FOREIGN_ARC=x86_64
-	FOREIGN_BOOST_ARC=x86
 elif [[ $HOST_ARC == x86* ]]; then
 	BOOST_ARC=x86
-	FOREIGN_ARC=arm64
-	FOREIGN_BOOST_ARC=arm
 else
 	BOOST_ARC=unknown
 fi
@@ -59,17 +55,17 @@ pushd boost
 echo patching boost...
 
 
-if [ ! -f boost/json/impl/array.ipp.orig ]; then
-	cp -f boost/json/impl/array.ipp boost/json/impl/array.ipp.orig
-else
-	cp -f boost/json/impl/array.ipp.orig boost/json/impl/array.ipp
-fi
-if [ ! -f libs/json/test/array.cpp.orig ]; then
-	cp -f libs/json/test/array.cpp libs/json/test/array.cpp.orig
-else
-	cp -f libs/json/test/array.cpp.orig libs/json/test/array.cpp
-fi
-patch -p0 <$SCRIPT_DIR/0001-json-array-erase-relocate.patch
+#if [ ! -f boost/json/impl/array.ipp.orig ]; then
+#	cp -f boost/json/impl/array.ipp boost/json/impl/array.ipp.orig
+#else
+#	cp -f boost/json/impl/array.ipp.orig boost/json/impl/array.ipp
+#fi
+#if [ ! -f libs/json/test/array.cpp.orig ]; then
+#	cp -f libs/json/test/array.cpp libs/json/test/array.cpp.orig
+#else
+#	cp -f libs/json/test/array.cpp.orig libs/json/test/array.cpp
+#fi
+#patch -p0 <$SCRIPT_DIR/0001-json-array-erase-relocate.patch
 
 if [ ! -f tools/build/src/tools/features/instruction-set-feature.jam.orig ]; then
 	cp -f tools/build/src/tools/features/instruction-set-feature.jam tools/build/src/tools/features/instruction-set-feature.jam.orig
@@ -80,7 +76,7 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 
 
 
-#LIBS_TO_BUILD="--with-fiber"
+#LIBS_TO_BUILD="--with-regex"
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave"
 
 B2_BUILD_OPTIONS="release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE"
@@ -188,8 +184,8 @@ mkdir "$BUILD_DIR/frameworks"
 
 build_xcframework()
 {
-	lipo -create stage/catalyst-$HOST_ARC/lib/lib$1.a stage/catalyst-$FOREIGN_ARC/lib/lib$1.a -output stage/catalyst/lib/lib$1.a
-	lipo -create stage/iossim-$HOST_ARC/lib/lib$1.a stage/iossim-$FOREIGN_ARC/lib/lib$1.a -output stage/iossim/lib/lib$1.a
+	lipo -create stage/catalyst-arm64/lib/lib$1.a stage/catalyst-x86_64/lib/lib$1.a -output stage/catalyst/lib/lib$1.a
+	lipo -create stage/iossim-arm64/lib/lib$1.a stage/iossim-x86_64/lib/lib$1.a -output stage/iossim/lib/lib$1.a
 
 	xcodebuild -create-xcframework -library stage/macosx/lib/lib$1.a -library stage/catalyst/lib/lib$1.a -library stage/ios/lib/lib$1.a -library stage/iossim/lib/lib$1.a -output "$BUILD_DIR/frameworks/$1.xcframework"
 }
