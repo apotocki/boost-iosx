@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 ################## SETUP BEGIN
+THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
 BOOST_VER=1.80.0
@@ -44,6 +45,7 @@ if [ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]; then
 	pushd $SCRIPT_DIR
     pod repo update
 	pod install --verbose
+	pod update --verbose
 	popd
 	mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
@@ -79,7 +81,8 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 #LIBS_TO_BUILD="--with-regex"
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave"
 
-B2_BUILD_OPTIONS="release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE"
+B2_BUILD_OPTIONS="-j$THREAD_COUNT -sICU_PATH=\"$ICU_PATH\" address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
+
 
 if true; then
 if [ -d bin.v2 ]; then
@@ -94,10 +97,10 @@ if true; then
 if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
-cp $ICU_PATH/frameworks/icudata.xcframework/macos-$HOST_ARC/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/macos-$HOST_ARC/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/macos-$HOST_ARC/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/macosx cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin address-model=64 architecture=$BOOST_ARC $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+cp $ICU_PATH/frameworks/icudata.xcframework/macos-*$HOST_ARC*/libicudata.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icui18n.xcframework/macos-*$HOST_ARC*/libicui18n.a $ICU_PATH/lib/
+cp $ICU_PATH/frameworks/icuuc.xcframework/macos-*$HOST_ARC*/libicuuc.a $ICU_PATH/lib/
+./b2 -j8 --stagedir=stage/macosx toolset=darwin architecture=$BOOST_ARC $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 fi
 
@@ -116,7 +119,7 @@ EOF
 cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/catalyst-$1 cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" abi=$4 toolset=darwin-catalyst address-model=64 architecture=$3 $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+./b2 --stagedir=stage/catalyst-$1 abi=$4 toolset=darwin-catalyst architecture=$3 $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
 
@@ -142,7 +145,7 @@ EOF
 cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/ios cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-ios address-model=64 instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+./b2 --stagedir=stage/ios toolset=darwin-ios instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 fi
 
@@ -160,7 +163,7 @@ EOF
 cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
 cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
-./b2 -j8 --stagedir=stage/iossim-$1 cxxflags="-std=c++17" -sICU_PATH="$ICU_PATH" toolset=darwin-iossim abi=$3 address-model=64 architecture=$2 target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+./b2 --stagedir=stage/iossim-$1 toolset=darwin-iossim abi=$3 architecture=$2 target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
 
