@@ -34,6 +34,7 @@ if [[ ! -f boost/b2 ]]; then
 fi
 
 ############### ICU
+#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/72.1.1
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
     if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
 		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
@@ -52,7 +53,6 @@ if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
         unzip -q icuio.xcframework.zip
         unzip -q icuuc.xcframework.zip
 		mkdir frameworks
-		mv include frameworks/Headers
 		mv icudata.xcframework frameworks/
 		mv icui18n.xcframework frameworks/
         mv icuio.xcframework frameworks/
