@@ -35,12 +35,37 @@ fi
 
 ############### ICU
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
-	pushd $SCRIPT_DIR
-    pod repo update
-	pod install --verbose
-	pod update --verbose
-	popd
-	mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
+    if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
+		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
+			rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
+		fi
+        mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
+		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
+        curl -L ${ICU4C_RELEASE_LINK}/include.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/include.zip
+		curl -L ${ICU4C_RELEASE_LINK}/icudata.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icudata.xcframework.zip
+		curl -L ${ICU4C_RELEASE_LINK}/icui18n.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icui18n.xcframework.zip
+        curl -L ${ICU4C_RELEASE_LINK}/icuio.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuio.xcframework.zip
+        curl -L ${ICU4C_RELEASE_LINK}/icuuc.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuuc.xcframework.zip
+		unzip -q include.zip
+		unzip -q icudata.xcframework.zip
+		unzip -q icui18n.xcframework.zip
+        unzip -q icuio.xcframework.zip
+        unzip -q icuuc.xcframework.zip
+		mkdir frameworks
+		mv include frameworks/Headers
+		mv icudata.xcframework frameworks/
+		mv icui18n.xcframework frameworks/
+        mv icuio.xcframework frameworks/
+        mv icuuc.xcframework frameworks/
+        popd
+    else
+        pushd $SCRIPT_DIR
+        pod repo update
+        pod install --verbose
+        pod update --verbose
+        popd
+    fi
+    mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
 ICU_PATH=$SCRIPT_DIR/Pods/icu4c-iosx/product
 ############### ICU
