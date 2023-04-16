@@ -3,5 +3,5 @@ platform :osx, '12.0'
 
 target 'ICUdep' do
   use_frameworks!
-  pod 'icu4c-iosx'
+  pod 'icu4c-iosx', :git => 'https://github.com/apotocki/icu4c-iosx', :submodules => 'true'
 end
