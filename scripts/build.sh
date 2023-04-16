@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.81.0
+BOOST_VER=1.82.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -34,15 +34,42 @@ if [[ ! -f boost/b2 ]]; then
 fi
 
 ############### ICU
+if true; then
+#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/72.1.1
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
-	pushd $SCRIPT_DIR
-    pod repo update
-	pod install --verbose
-	pod update --verbose
-	popd
-	mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
+    if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
+		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
+			rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
+		fi
+        mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
+		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
+        curl -L ${ICU4C_RELEASE_LINK}/include.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/include.zip
+		curl -L ${ICU4C_RELEASE_LINK}/icudata.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icudata.xcframework.zip
+		curl -L ${ICU4C_RELEASE_LINK}/icui18n.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icui18n.xcframework.zip
+        curl -L ${ICU4C_RELEASE_LINK}/icuio.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuio.xcframework.zip
+        curl -L ${ICU4C_RELEASE_LINK}/icuuc.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuuc.xcframework.zip
+		unzip -q include.zip
+		unzip -q icudata.xcframework.zip
+		unzip -q icui18n.xcframework.zip
+        unzip -q icuio.xcframework.zip
+        unzip -q icuuc.xcframework.zip
+		mkdir frameworks
+		mv icudata.xcframework frameworks/
+		mv icui18n.xcframework frameworks/
+        mv icuio.xcframework frameworks/
+        mv icuuc.xcframework frameworks/
+        popd
+    else
+        pushd $SCRIPT_DIR
+        pod repo update
+        pod install --verbose
+        #pod update --verbose
+        popd
+    fi
+    mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
 ICU_PATH=$SCRIPT_DIR/Pods/icu4c-iosx/product
+fi
 ############### ICU
 
 pushd boost
@@ -72,8 +99,11 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 
 LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
 
-B2_BUILD_OPTIONS="-j$THREAD_COUNT -sICU_PATH=\"$ICU_PATH\" address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
+B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
+if [[ ! -z "${ICU_PATH}" ]]; then
+	B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
+fi
 
 if true; then
 if [[ -d bin.v2 ]]; then
@@ -117,9 +147,11 @@ using darwin : : clang++ -arch $1  -isysroot $MACSYSROOT/SDKs/MacOSX.sdk
 : <architecture>$(boost_arc $1)
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/macos-*/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/macos-*/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/macos-*/libicuuc.a $ICU_PATH/lib/
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/macos-*/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/macos-*/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/macos-*/libicuuc.a $ICU_PATH/lib/
+fi
 ./b2 -j8 --stagedir=stage/macosx-$1 toolset=darwin architecture=$(boost_arc $1) abi=$(boost_abi $1) $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
@@ -135,9 +167,11 @@ using darwin : catalyst : clang++ -arch $1 --target=$2 -isysroot $MACSYSROOT/SDK
 : <architecture>$(boost_arc $1)
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
+fi
 ./b2 --stagedir=stage/catalyst-$1 toolset=darwin-catalyst architecture=$(boost_arc $1) abi=$(boost_abi $1) $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
@@ -153,9 +187,11 @@ using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $DEVSYSROOT/S
 : <architecture>arm <target-os>iphone 
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
+fi
 ./b2 --stagedir=stage/ios toolset=darwin-ios instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
@@ -172,9 +208,11 @@ using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $SIMSY
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
 EOF
-cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
-cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
+fi
 ./b2 --stagedir=stage/iossim-$1 toolset=darwin-iossim architecture=$(boost_arc $1) abi=$(boost_abi $1) target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }

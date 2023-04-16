@@ -1,0 +1,29 @@
+name: Build Boost Libraries
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+        - 1.**
+  workflow_dispatch:
+jobs:
+  Build:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/73.1.0
+        scripts/build.sh
+        for i in frameworks/*.xcframework/; do cd frameworks && zip -9 -r "$(basename -- $i).zip" $(basename -- $i) & done; wait
+        cd frameworks
+        mv Headers include
+        zip -9 -r include.zip include
+        wait
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          frameworks/*.zip
