@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.82.0
+BOOST_VER=1.83.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -35,7 +35,7 @@ fi
 
 ############### ICU
 if true; then
-#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/72.1.1
+#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/73.2.1
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
     if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
 		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
