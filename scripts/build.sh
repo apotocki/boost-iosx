@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.83.0
+BOOST_VER=1.84.0
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -35,7 +35,7 @@ fi
 
 ############### ICU
 if true; then
-#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/73.2.1
+#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/74.2.6
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
     if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
 		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
@@ -97,7 +97,7 @@ fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
 
-LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
+LIBS_TO_BUILD="--with-atomic --with-chrono --with-cobalt --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
 
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
@@ -266,6 +266,7 @@ build_xcframework()
 if true; then
 build_xcframework boost_atomic
 build_xcframework boost_chrono
+build_xcframework boost_cobalt
 build_xcframework boost_container
 build_xcframework boost_context
 build_xcframework boost_contract
