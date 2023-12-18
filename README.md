@@ -6,10 +6,10 @@ This repo provides a universal script for building static Boost C++ libraries fo
 The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
 
 ## Building libraries
-atomic, chrono, cobalt, container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
+atomic, chrono, container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
 
 ## Not building libraries
-graph_parallel, mpi, python
+graph_parallel, mpi, python, cobalt
 
 ## Prerequisites
   1) Xcode must be installed because xcodebuild is used to create xcframeworks
@@ -39,7 +39,7 @@ graph_parallel, mpi, python
     use_frameworks!
     pod 'boost-iosx', '~> 1.84.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.84.0.0'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.84.0.1'
 ```
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
