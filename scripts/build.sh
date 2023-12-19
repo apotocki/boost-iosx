@@ -13,6 +13,10 @@ BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+if [[ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]]; then
+	CLANG15=true
+fi
+
 if [[ ! -f "$BUILD_DIR/frameworks.built" ]]; then
 
 if [[ ! -f $BOOST_NAME.tar.bz2 ]]; then
@@ -97,7 +101,11 @@ fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
 
-LIBS_TO_BUILD="--with-atomic --with-chrono --with-cobalt --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
+LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
+
+if [[ $CLANG15 ]]; then
+	LIBS_TO_BUILD="$LIBS_TO_BUILD --with-cobalt"
+fi
 
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
@@ -266,7 +274,9 @@ build_xcframework()
 if true; then
 build_xcframework boost_atomic
 build_xcframework boost_chrono
-build_xcframework boost_cobalt
+if [[ $CLANG15 ]]; then
+    build_xcframework boost_cobalt
+fi
 build_xcframework boost_container
 build_xcframework boost_context
 build_xcframework boost_contract
