@@ -4,6 +4,11 @@ set -e
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
 BOOST_VER=1.84.0
+#MACOSX_VERSION_ARM=12.3
+#MACOSX_VERSION_X86_64=10.13
+IOS_VERSION=13.4
+IOS_SIM_VERSION=13.4
+CATALYST_VERSION=13.4
 ################## SETUP END
 DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
@@ -12,6 +17,9 @@ MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
 BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+MACOSX_VERSION_X86_64_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_X86_64}" ] && MACOSX_VERSION_X86_64_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_X86_64"
+MACOSX_VERSION_ARM_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_ARM}" ] && MACOSX_VERSION_ARM_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_ARM"
 
 if [[ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]]; then
 	CLANG15=true
@@ -150,7 +158,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : : clang++ -arch $1  -isysroot $MACSYSROOT/SDKs/MacOSX.sdk
+using darwin : : clang++ -arch $1 $2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk
 : <striper> <root>$MACSYSROOT
 : <architecture>$(boost_arc $1)
 ;
@@ -190,7 +198,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $DEVSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=13.4
+using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $DEVSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION
 : <striper> <root>$DEVSYSROOT 
 : <architecture>arm <target-os>iphone 
 ;
@@ -211,7 +219,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $SIMSYSROOT/SDKs/iPhoneSimulator.sdk -mios-simulator-version-min=13.4
+using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $SIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
 : <striper> <root>$SIMSYSROOT 
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
@@ -230,8 +238,8 @@ if true; then
 		rm -rf stage/macosx/lib
 	fi
 
-	build_macos_libs x86_64
-	build_macos_libs arm64
+	build_macos_libs x86_64 $MACOSX_VERSION_X86_64_BUILD_FLAGS
+	build_macos_libs arm64 $MACOSX_VERSION_ARM_BUILD_FLAGS
 	mkdir -p stage/macosx/lib
 fi
 
@@ -239,8 +247,8 @@ if true; then
 	if [[ -d stage/catalyst/lib ]]; then
 		rm -rf stage/catalyst/lib
 	fi
-	build_catalyst_libs arm64 arm-apple-ios13.4-macabi
-	build_catalyst_libs x86_64 x86_64-apple-ios13.4-macabi
+	build_catalyst_libs arm64 arm-apple-ios$CATALYST_VERSION-macabi
+	build_catalyst_libs x86_64 x86_64-apple-ios$CATALYST_VERSION-macabi
 	mkdir -p stage/catalyst/lib
 fi
 
@@ -248,8 +256,8 @@ if true; then
 	if [[ -d stage/iossim/lib ]]; then
 		rm -rf stage/iossim/lib
 	fi
-	build_sim_libs arm64
-	build_sim_libs x86_64
+	build_sim_libs arm64 -mios-simulator-version-min=$IOS_SIM_VERSION
+	build_sim_libs x86_64 -mios-simulator-version-min=$IOS_SIM_VERSION
 	mkdir -p stage/iossim/lib
 fi
 
