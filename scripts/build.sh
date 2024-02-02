@@ -10,9 +10,11 @@ IOS_VERSION=13.4
 IOS_SIM_VERSION=13.4
 CATALYST_VERSION=13.4
 ################## SETUP END
-DEVSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
-SIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
+IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
+IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
+XROSSYSROOT=$XCODE_ROOT/Platforms/XROS.platform/Developer
+XROSSIMSYSROOT=$XCODE_ROOT/Platforms/XRSimulator.platform/Developer
 
 BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
@@ -198,9 +200,9 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $DEVSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION
-: <striper> <root>$DEVSYSROOT 
-: <architecture>arm <target-os>iphone 
+using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION
+: <striper> <root>$IOSSYSROOT
+: <architecture>arm <target-os>iphone
 ;
 EOF
 if [[ ! -z "${ICU_PATH}" ]]; then
@@ -213,15 +215,15 @@ rm -rf bin.v2
 }
 
 
-build_sim_libs()
+build_iossim_libs()
 {
 if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $SIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
-: <striper> <root>$SIMSYSROOT 
-: <architecture>$(boost_arc $1) <target-os>iphone 
+using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
+: <striper> <root>$IOSSIMSYSROOT
+: <architecture>$(boost_arc $1) <target-os>iphone
 ;
 EOF
 if [[ ! -z "${ICU_PATH}" ]]; then
@@ -232,6 +234,58 @@ fi
 ./b2 --stagedir=stage/iossim-$1 toolset=darwin-iossim architecture=$(boost_arc $1) abi=$(boost_abi $1) target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
 rm -rf bin.v2
 }
+
+build_xros_libs()
+{
+if [[ -f tools/build/src/user-config.jam ]]; then
+	rm -f tools/build/src/user-config.jam
+fi
+cat >> tools/build/src/user-config.jam <<EOF
+using darwin : xros : clang++ -arch arm64 -fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk
+: <striper> <root>$XROSSYSROOT
+: <architecture>arm <target-os>iphone
+;
+EOF
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/xros-arm64/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-arm64/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-arm64/libicuuc.a $ICU_PATH/lib/
+fi
+./b2 --stagedir=stage/xros toolset=darwin-xros instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+rm -rf bin.v2
+}
+
+
+build_xrossim_libs()
+{
+if [[ -f tools/build/src/user-config.jam ]]; then
+	rm -f tools/build/src/user-config.jam
+fi
+cat >> tools/build/src/user-config.jam <<EOF
+using darwin : xrossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk
+: <striper> <root>$XROSSIMSYSROOT
+: <architecture>$(boost_arc $1) <target-os>iphone
+;
+EOF
+if [[ ! -z "${ICU_PATH}" ]]; then
+	cp $ICU_PATH/frameworks/icudata.xcframework/xros-*-simulator/libicudata.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-*-simulator/libicui18n.a $ICU_PATH/lib/
+	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-*-simulator/libicuuc.a $ICU_PATH/lib/
+fi
+./b2 --stagedir=stage/xrossim-$1 toolset=darwin-xrossim architecture=$(boost_arc $1) abi=$(boost_abi $1) target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
+rm -rf bin.v2
+}
+
+if true; then
+	if [[ -d stage/xrossim/lib ]]; then
+		rm -rf stage/xrossim/lib
+	fi
+	build_xrossim_libs arm64
+	build_xrossim_libs x86_64
+	mkdir -p stage/xrossim/lib
+fi
+
+build_xros_libs
 
 if true; then
 	if [ -d stage/macosx/lib ]; then
@@ -256,8 +310,8 @@ if true; then
 	if [[ -d stage/iossim/lib ]]; then
 		rm -rf stage/iossim/lib
 	fi
-	build_sim_libs arm64 -mios-simulator-version-min=$IOS_SIM_VERSION
-	build_sim_libs x86_64 -mios-simulator-version-min=$IOS_SIM_VERSION
+	build_iossim_libs arm64 -mios-simulator-version-min=$IOS_SIM_VERSION
+	build_iossim_libs x86_64 -mios-simulator-version-min=$IOS_SIM_VERSION
 	mkdir -p stage/iossim/lib
 fi
 
@@ -275,8 +329,16 @@ build_xcframework()
 	lipo -create stage/macosx-arm64/lib/lib$1.a stage/macosx-x86_64/lib/lib$1.a -output stage/macosx/lib/lib$1.a
 	lipo -create stage/catalyst-arm64/lib/lib$1.a stage/catalyst-x86_64/lib/lib$1.a -output stage/catalyst/lib/lib$1.a
 	lipo -create stage/iossim-arm64/lib/lib$1.a stage/iossim-x86_64/lib/lib$1.a -output stage/iossim/lib/lib$1.a
+    lipo -create stage/xrossim-arm64/lib/lib$1.a stage/xrossim-x86_64/lib/lib$1.a -output stage/xrossim/lib/lib$1.a
 
-	xcodebuild -create-xcframework -library stage/macosx/lib/lib$1.a -library stage/catalyst/lib/lib$1.a -library stage/ios/lib/lib$1.a -library stage/iossim/lib/lib$1.a -output "$BUILD_DIR/frameworks/$1.xcframework"
+	xcodebuild -create-xcframework \
+        -library stage/macosx/lib/lib$1.a \
+        -library stage/catalyst/lib/lib$1.a \
+        -library stage/ios/lib/lib$1.a \
+        -library stage/iossim/lib/lib$1.a \
+        -library stage/xros/lib/lib$1.a \
+        -library stage/xrossim/lib/lib$1.a \
+        -output "$BUILD_DIR/frameworks/$1.xcframework"
 }
 
 if true; then
