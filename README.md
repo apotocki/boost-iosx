@@ -1,8 +1,8 @@
-# Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
+# Boost C++ for iOS, visionOS, macOS (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
 Supported versions: 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
 
-This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
+This repo provides a universal script for building static Boost C++ libraries for use in iOS, visionOS, and macOS & Catalyst applications.
 The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
 
 ## Building libraries
@@ -16,10 +16,11 @@ graph_parallel, mpi, python
   2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
   ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
   3) You should not have your own user-config.jam file in your home directory!
-
+  4) For the creation of visionOS related artifacts and their integration into the resulting xcframeworks, XROS.platform and XRSimulator.platform should be available in the folder: /Applications/Xcode.app/Contents/Developer/Platforms
+  
 ## Building notes
-1) Libraries 'locale' and 'regex' are being built with ICU backend. ICU build scripts are being taken from https://github.com/apotocki/icu4c-iosx and run with the help of 'pod' utility.
-2) 'test' library is building for iOS with BOOST_TEST_NO_MAIN flag.
+1) The 'locale' and 'regex' libraries are built using the ICU backend. ICU build scripts are taken from https://github.com/apotocki/icu4c-iosx and run using the 'pod' utility.
+2) The 'test' library is built for iOS with the BOOST_TEST_NO_MAIN flag.
 
 ## How to build?
  - Manually
@@ -47,7 +48,7 @@ If you want to use particular boost libraries, specify them as in the following 
     pod 'boost-iosx/log'
     pod 'boost-iosx/program_options'
 
-    # note: Some libraries have dependencies on other Boost libraries. In that case, you should explicitly add all their dependencies to your Podfile.
+    # note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:
 ```
