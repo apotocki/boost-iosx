@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.84.0
+BOOST_VER=1.85.0
 #MACOSX_VERSION_ARM=12.3
 #MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
@@ -111,7 +111,7 @@ fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
 
-LIBS_TO_BUILD="--with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
+LIBS_TO_BUILD="--with-charconv --with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
 
 if [[ $CLANG15 ]]; then
 	LIBS_TO_BUILD="$LIBS_TO_BUILD --with-cobalt"
@@ -342,6 +342,7 @@ build_xcframework()
 
 if true; then
 build_xcframework boost_atomic
+build_xcframework boost_charconv
 build_xcframework boost_chrono
 if [[ $CLANG15 ]]; then
     build_xcframework boost_cobalt
