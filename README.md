@@ -1,9 +1,9 @@
 # Boost C++ for iOS, visionOS, macOS (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
-Supported versions: 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
+Supported versions: 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, visionOS, and macOS & Catalyst applications.
-The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.bz2
+The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.86.0/source/boost_1_86_0.tar.bz2
 
 ## Building libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
@@ -33,7 +33,7 @@ graph_parallel, mpi, python
     scripts/build.sh
 
     # have fun, the result artifacts will be located in 'frameworks' folder.
-    # Then you can add desirable xcframewors in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
+    # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
 ```    
  - Use cocoapods. Add the following lines into your project's Podfile:
 ```

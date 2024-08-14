@@ -3,7 +3,7 @@ set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.85.0
+BOOST_VER=1.86.0
 #MACOSX_VERSION_ARM=12.3
 #MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
