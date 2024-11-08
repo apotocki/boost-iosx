@@ -240,7 +240,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : iossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
+using darwin : iossim : clang++ -arch $1 -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
 : <striper> <root>$IOSSIMSYSROOT 
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
@@ -260,7 +260,7 @@ if [[ -f tools/build/src/user-config.jam ]]; then
 	rm -f tools/build/src/user-config.jam
 fi
 cat >> tools/build/src/user-config.jam <<EOF
-using darwin : xrossim : clang++ -arch $1 -fembed-bitcode-marker -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk $2
+using darwin : xrossim : clang++ -arch $1 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk $2
 : <striper> <root>$XROSSIMSYSROOT 
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
