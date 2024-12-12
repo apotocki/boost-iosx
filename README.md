@@ -40,7 +40,7 @@ graph_parallel, mpi, python
     use_frameworks!
     pod 'boost-iosx', '~> 1.87.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.87.0.0'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.87.0.1'
 ```
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
