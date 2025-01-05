@@ -34,7 +34,7 @@ if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
 BOOST_ARCHIVE_FILE=$BOOST_NAME.tar.bz2
 
 if [ -f $BOOST_ARCHIVE_FILE ]; then
-	FILE_HASH=$(sha256sum "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	FILE_HASH=$(shasum -a 256 "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
 	if [ ! "$FILE_HASH" == "$EXPECTED_HASH" ]; then
     	echo "Wrong archive hash, trying to reload the archive"
         rm "$BOOST_ARCHIVE_FILE"
@@ -57,7 +57,7 @@ if [ ! -f $BOOST_ARCHIVE_FILE ]; then
 
 	    # Check if the download was successful
 	    if [ $? -eq 0 ]; then
-	        FILE_HASH=$(sha256sum "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	        FILE_HASH=$(shasum -a 256 "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
 	        if [ "$FILE_HASH" == "$EXPECTED_HASH" ]; then
 	        	[ -d boost ] && rm -rf boost
 	            break
