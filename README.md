@@ -3,7 +3,8 @@
 Supported version: 1.87.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, visionOS, and Mac OS X & Catalyst applications.
-The latest supported Boost version is taken from: https://boostorg.jfrog.io/artifactory/main/release/1.87.0/source/boost_1_87_0.tar.bz2
+
+Since the Boost distribution URLs are often broken and change, the script tries to download it from the links specified in the LOCATIONS file in the master branch. Only after the SHA256 hash of the downloaded archive is verified, the libraries are unpacked and compiled.
 
 ## Building libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
@@ -40,7 +41,7 @@ graph_parallel, mpi, python
     use_frameworks!
     pod 'boost-iosx', '~> 1.87.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.87.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.87.0.2'
 ```
 If you want to use particular boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
