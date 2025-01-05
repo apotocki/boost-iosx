@@ -4,12 +4,14 @@ set -e
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 XCODE_ROOT=$( xcode-select -print-path )
 BOOST_VER=1.87.0
+EXPECTED_HASH="af57be25cb4c4f4b413ed692fe378affb4352ea50fbe294a11ef548f4d527d89"
 #MACOSX_VERSION_ARM=12.3
 #MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
 IOS_SIM_VERSION=13.4
 CATALYST_VERSION=13.4
 ################## SETUP END
+LOCATIONS_FILE_URL="https://raw.githubusercontent.com/apotocki/boost-iosx/master/LOCATIONS"
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
@@ -23,25 +25,63 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 MACOSX_VERSION_X86_64_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_X86_64}" ] && MACOSX_VERSION_X86_64_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_X86_64"
 MACOSX_VERSION_ARM_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_ARM}" ] && MACOSX_VERSION_ARM_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_ARM"
 
-if [[ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]]; then
+if [ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]; then
 	CLANG15=true
 fi
 
-if [[ ! -f "$BUILD_DIR/frameworks.built" ]]; then
+if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
 
-if [[ ! -f $BOOST_NAME.tar.bz2 ]]; then
-	curl -L https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VER/source/$BOOST_NAME.tar.bz2 -o $BOOST_NAME.tar.bz2
-	if [[ -d boost ]]; then
-		rm -rf boost
-	fi
+BOOST_ARCHIVE_FILE=$BOOST_NAME.tar.bz2
+
+if [ -f $BOOST_ARCHIVE_FILE ]; then
+	FILE_HASH=$(sha256sum "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	if [ ! "$FILE_HASH" == "$EXPECTED_HASH" ]; then
+    	echo "Wrong archive hash, trying to reload the archive"
+        rm "$BOOST_ARCHIVE_FILE"
+    fi
 fi
-if [[ ! -d boost ]]; then
+
+if [ ! -f $BOOST_ARCHIVE_FILE ]; then
+	TEMP_LOCATIONS_FILE=$(mktemp)
+	curl -s -o "$TEMP_LOCATIONS_FILE" "$LOCATIONS_FILE_URL"
+	if [ $? -ne 0 ]; then
+	    echo "Failed to download the LOCATIONS file."
+	    exit 1
+	fi
+	while IFS= read -r linktemplate; do
+		linktemplate=${linktemplate/DOTVERSION/"$BOOST_VER"}
+		link=${linktemplate/FILENAME/"$BOOST_ARCHIVE_FILE"}
+		echo "downloading from $link ..."
+
+	    curl -o "$BOOST_ARCHIVE_FILE" "$link"
+
+	    # Check if the download was successful
+	    if [ $? -eq 0 ]; then
+	        FILE_HASH=$(sha256sum "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	        if [ "$FILE_HASH" == "$EXPECTED_HASH" ]; then
+	        	[ -d boost ] && rm -rf boost
+	            break
+	        else
+	        	echo "Wrong archive hash $FILE_HASH, expected $EXPECTED_HASH. Trying next link to reload the archive."
+	        	rm $BOOST_ARCHIVE_FILE
+	        fi
+	    fi
+	done < "$TEMP_LOCATIONS_FILE"
+	rm "$TEMP_LOCATIONS_FILE"
+fi
+
+if [ ! -f $BOOST_ARCHIVE_FILE ]; then
+	echo "Failed to download the Boost."
+    exit 1
+fi
+
+if [ ! -d boost ]; then
 	echo "extracting $BOOST_NAME.tar.bz2 ..."
 	tar -xf $BOOST_NAME.tar.bz2
 	mv $BOOST_NAME boost
 fi
 
-if [[ ! -f boost/b2 ]]; then
+if [ ! -f boost/b2 ]; then
 	pushd boost
 	./bootstrap.sh
 	popd
@@ -50,9 +90,9 @@ fi
 ############### ICU
 if true; then
 #export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/74.2.8
-if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
-    if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
-		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
+if [ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]; then
+    if [ ! -z "${ICU4C_RELEASE_LINK}" ]; then
+		if [ -d $SCRIPT_DIR/Pods/icu4c-iosx ]; then
 			rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
 		fi
         mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
@@ -113,23 +153,19 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 
 LIBS_TO_BUILD="--with-charconv --with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
 
-if [[ $CLANG15 ]]; then
+if [ $CLANG15 ]; then
 	LIBS_TO_BUILD="$LIBS_TO_BUILD --with-cobalt"
 fi
 
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
 fi
 
 if true; then
-if [[ -d bin.v2 ]]; then
-	rm -rf bin.v2
-fi
-if [[ -d stage ]]; then
-	rm -rf stage
-fi
+    [ -d bin.v2 ] && rm -rf bin.v2
+    [ -d stage ] &&	rm -rf stage
 fi
 
 function boost_arc()
@@ -156,16 +192,15 @@ function boost_abi()
 
 build_macos_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : : clang++ -arch $1 $2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk
 : <striper> <root>$MACSYSROOT
 : <architecture>$(boost_arc $1)
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/macos-*/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/macos-*/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/macos-*/libicuuc.a $ICU_PATH/lib/
@@ -176,16 +211,15 @@ rm -rf bin.v2
 
 build_catalyst_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : catalyst : clang++ -arch $1 --target=$2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
 : <striper> <root>$MACSYSROOT
 : <architecture>$(boost_arc $1)
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
@@ -196,16 +230,15 @@ rm -rf bin.v2
 
 build_ios_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION
 : <striper> <root>$IOSSYSROOT 
 : <architecture>arm <target-os>iphone 
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
@@ -216,16 +249,15 @@ rm -rf bin.v2
 
 build_xros_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : xros : clang++ -arch arm64 -fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk
 : <striper> <root>$XROSSYSROOT 
 : <architecture>arm <target-os>iphone 
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/xros-arm64/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-arm64/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-arm64/libicuuc.a $ICU_PATH/lib/
@@ -236,16 +268,15 @@ rm -rf bin.v2
 
 build_sim_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : iossim : clang++ -arch $1 -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
 : <striper> <root>$IOSSIMSYSROOT 
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
@@ -256,16 +287,15 @@ rm -rf bin.v2
 
 build_xrossim_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
+[ -f tools/build/src/user-config.jam ] && rm -f tools/build/src/user-config.jam
+
 cat >> tools/build/src/user-config.jam <<EOF
 using darwin : xrossim : clang++ -arch $1 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk $2
 : <striper> <root>$XROSSIMSYSROOT 
 : <architecture>$(boost_arc $1) <target-os>iphone 
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
+if [ ! -z "${ICU_PATH}" ]; then
 	cp $ICU_PATH/frameworks/icudata.xcframework/xros-*-simulator/libicudata.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-*-simulator/libicui18n.a $ICU_PATH/lib/
 	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-*-simulator/libicuuc.a $ICU_PATH/lib/
@@ -275,37 +305,32 @@ rm -rf bin.v2
 }
 
 if true; then
-	if [ -d stage/macosx/lib ]; then
-		rm -rf stage/macosx/lib
-	fi
-
+	[ -d stage/macosx/lib ] && rm -rf stage/macosx/lib
+	
 	build_macos_libs x86_64 $MACOSX_VERSION_X86_64_BUILD_FLAGS
 	build_macos_libs arm64 $MACOSX_VERSION_ARM_BUILD_FLAGS
 	mkdir -p stage/macosx/lib
 fi
 
 if true; then
-	if [[ -d stage/catalyst/lib ]]; then
-		rm -rf stage/catalyst/lib
-	fi
+	[ -d stage/catalyst/lib ] && rm -rf stage/catalyst/lib
+	
 	build_catalyst_libs arm64 arm-apple-ios$CATALYST_VERSION-macabi
 	build_catalyst_libs x86_64 x86_64-apple-ios$CATALYST_VERSION-macabi
 	mkdir -p stage/catalyst/lib
 fi
 
 if true; then
-	if [[ -d stage/iossim/lib ]]; then
-		rm -rf stage/iossim/lib
-	fi
+	[ -d stage/iossim/lib ] && rm -rf stage/iossim/lib
+	
 	build_sim_libs arm64 -mios-simulator-version-min=$IOS_SIM_VERSION
 	build_sim_libs x86_64 -mios-simulator-version-min=$IOS_SIM_VERSION
 	mkdir -p stage/iossim/lib
 fi
 
 if [ -d $XROSSIMSYSROOT/SDKs/XRSimulator.sdk ]; then
-	if [[ -d stage/xrossim/lib ]]; then
-		rm -rf stage/xrossim/lib
-	fi
+	[ -d stage/xrossim/lib ] && rm -rf stage/xrossim/lib
+	
 	build_xrossim_libs arm64
 	build_xrossim_libs x86_64
 	mkdir -p stage/xrossim/lib
@@ -317,7 +342,7 @@ if [ -d $XROSSYSROOT ]; then
 fi
 
 echo installing boost...
-if [[ -d "$BUILD_DIR/frameworks" ]]; then
+if [ -d "$BUILD_DIR/frameworks" ]; then
     rm -rf "$BUILD_DIR/frameworks"
 fi
 
@@ -344,9 +369,7 @@ if true; then
 build_xcframework boost_atomic
 build_xcframework boost_charconv
 build_xcframework boost_chrono
-if [[ $CLANG15 ]]; then
-    build_xcframework boost_cobalt
-fi
+[ $CLANG15 ] && build_xcframework boost_cobalt
 build_xcframework boost_container
 build_xcframework boost_context
 build_xcframework boost_contract
