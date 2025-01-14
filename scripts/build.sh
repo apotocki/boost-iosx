@@ -2,42 +2,163 @@
 set -e
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
+HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
 BOOST_VER=1.86.0
-#MACOSX_VERSION_ARM=12.3
-#MACOSX_VERSION_X86_64=10.13
+EXPECTED_HASH="1bed88e40401b2cb7a1f76d4bab499e352fa4d0c5f31c0dbae64e24d34d7513b"
+MACOSX_VERSION_ARM=12.3
+MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
 IOS_SIM_VERSION=13.4
 CATALYST_VERSION=13.4
+TVOS_VERSION=13.0
+TVOS_SIM_VERSION=13.0
+WATCHOS_VERSION=11.0
+WATCHOS_SIM_VERSION=11.0
 ################## SETUP END
+LOCATIONS_FILE_URL="https://raw.githubusercontent.com/apotocki/boost-iosx/master/LOCATIONS"
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
 XROSSYSROOT=$XCODE_ROOT/Platforms/XROS.platform/Developer
 XROSSIMSYSROOT=$XCODE_ROOT/Platforms/XRSimulator.platform/Developer
+TVOSSYSROOT=$XCODE_ROOT/Platforms/AppleTVOS.platform/Developer
+TVOSSIMSYSROOT=$XCODE_ROOT/Platforms/AppleTVSimulator.platform/Developer
+WATCHOSSYSROOT=$XCODE_ROOT/Platforms/WatchOS.platform/Developer
+WATCHOSSIMSYSROOT=$XCODE_ROOT/Platforms/WatchSimulator.platform/Developer
+
+LIBS_TO_BUILD_ALL="charconv,atomic,chrono,container,context,contract,coroutine,date_time,exception,fiber,filesystem,graph,iostreams,json,locale,log,math,nowide,program_options,random,regex,serialization,stacktrace,system,test,thread,timer,type_erasure,wave,url,cobalt"
+
+BUILD_PLATFORMS_ALL="macosx,macosx-arm64,macosx-x86_64,macosx-both,ios,iossim,iossim-arm64,iossim-x86_64,iossim-both,catalyst,catalyst-arm64,catalyst-x86_64,catalyst-both,xros,xrossim,xrossim-arm64,xrossim-x86_64,xrossim-both,tvos,tvossim,tvossim-both,tvossim-arm64,tvossim-x86_64,watchos,watchossim,watchossim-both,watchossim-arm64,watchossim-x86_64"
 
 BOOST_NAME=boost_${BOOST_VER//./_}
 BUILD_DIR="$( cd "$( dirname "./" )" >/dev/null 2>&1 && pwd )"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-MACOSX_VERSION_X86_64_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_X86_64}" ] && MACOSX_VERSION_X86_64_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_X86_64"
-MACOSX_VERSION_ARM_BUILD_FLAGS="" && [ ! -z "${MACOSX_VERSION_ARM}" ] && MACOSX_VERSION_ARM_BUILD_FLAGS="-mmacosx-version-min=$MACOSX_VERSION_ARM"
+[[ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]] && CLANG15=true
 
-if [[ $(clang++ --version | head -1 | sed -E 's/([a-zA-Z ]+)([0-9]+).*/\2/') -gt 14 ]]; then
-	CLANG15=true
+LIBS_TO_BUILD=$LIBS_TO_BUILD_ALL
+[[ ! $CLANG15 ]] && LIBS_TO_BUILD="${LIBS_TO_BUILD/,cobalt/}"
+
+BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
+[[ -d $XROSSYSROOT/SDKs/XROS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xros"
+[[ -d $XROSSIMSYSROOT/SDKs/XRSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xrossim"
+[[ -d $TVOSSYSROOT/SDKs/AppleTVOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvos"
+[[ -d $TVOSSIMSYSROOT/SDKs/AppleTVSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim"
+[[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
+[[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
+
+# parse command line
+for i in "$@"; do
+  case $i in
+    -l=*|--libs=*)
+      LIBS_TO_BUILD="${i#*=}"
+      shift # past argument=value
+      ;;
+    -p=*|--platforms=*)
+      BUILD_PLATFORMS="${i#*=},"
+      shift # past argument=value
+      ;;
+    --rebuild)
+      REBUILD=true
+      #[ -f "$BUILD_DIR/frameworks.built" ] && rm "$BUILD_DIR/frameworks.built"
+      shift # past argument with no value
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+#if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
+
+LIBS_TO_BUILD=${LIBS_TO_BUILD//,/ }
+
+#sort and hash the library list
+LIBS_TO_BUILD_ARRAY=($LIBS_TO_BUILD)
+IFS=$'\n' LIBS_TO_BUILD_SORTED_ARRAY=($(sort <<<"${LIBS_TO_BUILD_ARRAY[*]}")); unset IFS
+LIBS_TO_BUILD_SORTED="${LIBS_TO_BUILD_SORTED_ARRAY[@]}"
+#LIBS_HASH=$( echo -n $LIBS_TO_BUILD_SORTED | shasum -a 256 | awk '{ print $1 }' )
+LIBS_HASH=$LIBS_TO_BUILD_SORTED
+
+for i in $LIBS_TO_BUILD; do :;
+if [[ ! ",$LIBS_TO_BUILD_ALL," == *",$i,"* ]]; then
+	echo "Unknown library '$i'"
+	exi1 1
+fi
+done
+
+[[ "$BUILD_PLATFORMS" == *macosx-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,macosx-arm64,macosx-x86_64"
+[[ "$BUILD_PLATFORMS" == *iossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,iossim-arm64,iossim-x86_64"
+[[ "$BUILD_PLATFORMS" == *catalyst-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,catalyst-arm64,catalyst-x86_64"
+[[ "$BUILD_PLATFORMS" == *xrossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xrossim-arm64,xrossim-x86_64"
+[[ "$BUILD_PLATFORMS" == *tvossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim-arm64,tvossim-x86_64"
+[[ "$BUILD_PLATFORMS" == *watchossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-arm64,watchossim-x86_64"
+[[ "$BUILD_PLATFORMS," == *"macosx,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,macosx-$HOST_ARC"
+[[ "$BUILD_PLATFORMS," == *"iossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,iossim-$HOST_ARC"
+[[ "$BUILD_PLATFORMS," == *"catalyst,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,catalyst-$HOST_ARC"
+[[ "$BUILD_PLATFORMS," == *"xrossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xrossim-$HOST_ARC"
+[[ "$BUILD_PLATFORMS," == *"tvossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim-$HOST_ARC"
+[[ "$BUILD_PLATFORMS," == *"watchossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-$HOST_ARC"
+BUILD_PLATFORMS=" ${BUILD_PLATFORMS//,/ } "
+
+for i in $BUILD_PLATFORMS; do :;
+if [[ ! ",$BUILD_PLATFORMS_ALL," == *",$i,"* ]]; then
+	echo "Unknown platform '$i'"
+	exi1 1
+fi
+done
+
+BOOST_ARCHIVE_FILE=$BOOST_NAME.tar.bz2
+
+if [[ -f $BOOST_ARCHIVE_FILE ]]; then
+	FILE_HASH=$(shasum -a 256 "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	if [[ ! "$FILE_HASH" == "$EXPECTED_HASH" ]]; then
+    	echo "Wrong archive hash, trying to reload the archive"
+        rm "$BOOST_ARCHIVE_FILE"
+    fi
 fi
 
-if [[ ! -f "$BUILD_DIR/frameworks.built" ]]; then
-
-if [[ ! -f $BOOST_NAME.tar.bz2 ]]; then
-	curl -L https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VER/source/$BOOST_NAME.tar.bz2 -o $BOOST_NAME.tar.bz2
-	if [[ -d boost ]]; then
-		rm -rf boost
+if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
+	TEMP_LOCATIONS_FILE=$(mktemp)
+	curl -s -o "$TEMP_LOCATIONS_FILE" "$LOCATIONS_FILE_URL"
+	if [[ $? -ne 0 ]]; then
+	    echo "Failed to download the LOCATIONS file."
+	    exit 1
 	fi
+	while IFS= read -r linktemplate; do
+		linktemplate=${linktemplate/DOTVERSION/"$BOOST_VER"}
+		link=${linktemplate/FILENAME/"$BOOST_ARCHIVE_FILE"}
+		echo "downloading from $link ..."
+
+	    curl -o "$BOOST_ARCHIVE_FILE" "$link"
+
+	    # Check if the download was successful
+	    if [ $? -eq 0 ]; then
+	        FILE_HASH=$(shasum -a 256 "$BOOST_ARCHIVE_FILE" | awk '{ print $1 }')
+	        if [[ "$FILE_HASH" == "$EXPECTED_HASH" ]]; then
+	        	[[ -d boost ]] && rm -rf boost
+	            break
+	        else
+	        	echo "Wrong archive hash $FILE_HASH, expected $EXPECTED_HASH. Trying next link to reload the archive."
+	        	rm $BOOST_ARCHIVE_FILE
+	        fi
+	    fi
+	done < "$TEMP_LOCATIONS_FILE"
+	rm "$TEMP_LOCATIONS_FILE"
 fi
+
+if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
+	echo "Failed to download the Boost."
+    exit 1
+fi
+
 if [[ ! -d boost ]]; then
-	echo "extracting $BOOST_NAME.tar.bz2 ..."
-	tar -xf $BOOST_NAME.tar.bz2
+	echo "extracting $BOOST_ARCHIVE_FILE ..."
+	tar -xf $BOOST_ARCHIVE_FILE
 	mv $BOOST_NAME boost
 fi
 
@@ -49,28 +170,26 @@ fi
 
 ############### ICU
 if true; then
-#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/74.2.8
+#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
 if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
     if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
-		if [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]]; then
-			rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
-		fi
-        mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
+		[[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
+		mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
 		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
         curl -L ${ICU4C_RELEASE_LINK}/include.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/include.zip
 		curl -L ${ICU4C_RELEASE_LINK}/icudata.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icudata.xcframework.zip
 		curl -L ${ICU4C_RELEASE_LINK}/icui18n.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icui18n.xcframework.zip
-        curl -L ${ICU4C_RELEASE_LINK}/icuio.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuio.xcframework.zip
+        #curl -L ${ICU4C_RELEASE_LINK}/icuio.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuio.xcframework.zip
         curl -L ${ICU4C_RELEASE_LINK}/icuuc.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuuc.xcframework.zip
 		unzip -q include.zip
 		unzip -q icudata.xcframework.zip
 		unzip -q icui18n.xcframework.zip
-        unzip -q icuio.xcframework.zip
+        #unzip -q icuio.xcframework.zip
         unzip -q icuuc.xcframework.zip
 		mkdir frameworks
 		mv icudata.xcframework frameworks/
 		mv icui18n.xcframework frameworks/
-        mv icuio.xcframework frameworks/
+        #mv icuio.xcframework frameworks/
         mv icuuc.xcframework frameworks/
         popd
     else
@@ -80,7 +199,7 @@ if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
         #pod update --verbose
         popd
     fi
-    mkdir $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
+    mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
 ICU_PATH=$SCRIPT_DIR/Pods/icu4c-iosx/product
 fi
@@ -111,25 +230,16 @@ fi
 patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/instruction-set-feature.jam.patch
 
 
-LIBS_TO_BUILD="--with-charconv --with-atomic --with-chrono --with-container --with-context --with-contract --with-coroutine --with-date_time --with-exception --with-fiber --with-filesystem --with-graph --with-iostreams --with-json --with-locale --with-log --with-math --with-nowide --with-program_options --with-random --with-regex --with-serialization --with-stacktrace --with-system --with-test --with-thread --with-timer --with-type_erasure --with-wave --with-url"
-
-if [[ $CLANG15 ]]; then
-	LIBS_TO_BUILD="$LIBS_TO_BUILD --with-cobalt"
-fi
-
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
-if [[ ! -z "${ICU_PATH}" ]]; then
-	B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
-fi
+[[ ! -z "${ICU_PATH}" ]] && B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
+
+for i in $LIBS_TO_BUILD; do :;
+  B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS --with-$i"
+done
 
 if true; then
-if [[ -d bin.v2 ]]; then
-	rm -rf bin.v2
-fi
-if [[ -d stage ]]; then
-	rm -rf stage
-fi
+    [ -d bin.v2 ] && rm -rf bin.v2
 fi
 
 function boost_arc()
@@ -154,246 +264,187 @@ function boost_abi()
 	fi
 }
 
-build_macos_libs()
+#(paltform=$1 architecture=$2 additional_flags=$3 root=$4 depfilter=$5 additional_config=$6 additional_b2flags=$7)
+build_generic_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : : clang++ -arch $1 $2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk
-: <striper> <root>$MACSYSROOT
-: <architecture>$(boost_arc $1)
+if [[ $REBUILD == true ]] || [[ ! -f $1-$2-build.success ]] || [[ "$(< $1-$2-build.success)" != "$LIBS_HASH" ]]; then
+    [[ -f $1-$2-build.success ]] && rm $1-$2-build.success
+    
+    [[ -f tools/build/src/user-config.jam ]] && rm -f tools/build/src/user-config.jam
+    
+    cat >> tools/build/src/user-config.jam <<EOF
+using darwin : $1 : clang++ -arch $2 $3
+: <striper> <root>$4
+: <architecture>$(boost_arc $2) $6
 ;
 EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/macos-*/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/macos-*/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/macos-*/libicuuc.a $ICU_PATH/lib/
+    if [[ ! -z "${ICU_PATH}" ]]; then
+        cp $ICU_PATH/frameworks/icudata.xcframework/$5/libicudata.a $ICU_PATH/lib/
+        cp $ICU_PATH/frameworks/icui18n.xcframework/$5/libicui18n.a $ICU_PATH/lib/
+        cp $ICU_PATH/frameworks/icuuc.xcframework/$5/libicuuc.a $ICU_PATH/lib/
+    fi
+    ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) $7 $B2_BUILD_OPTIONS
+    rm -rf bin.v2
+    printf "$LIBS_HASH" > $1-$2-build.success
 fi
-./b2 -j8 --stagedir=stage/macosx-$1 toolset=darwin architecture=$(boost_arc $1) abi=$(boost_abi $1) $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+}
+
+build_macos_libs()
+{
+    build_generic_libs macosx $1 "$2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk" $MACSYSROOT "macos-*"
 }
 
 build_catalyst_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : catalyst : clang++ -arch $1 --target=$2 -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks
-: <striper> <root>$MACSYSROOT
-: <architecture>$(boost_arc $1)
-;
-EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-maccatalyst/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-maccatalyst/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-maccatalyst/libicuuc.a $ICU_PATH/lib/
-fi
-./b2 --stagedir=stage/catalyst-$1 toolset=darwin-catalyst architecture=$(boost_arc $1) abi=$(boost_abi $1) $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+    build_generic_libs catalyst $1 "--target=$1-apple-ios$CATALYST_VERSION-macabi -isysroot $MACSYSROOT/SDKs/MacOSX.sdk -I$MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include/ -isystem $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/usr/include -iframework $MACSYSROOT/SDKs/MacOSX.sdk/System/iOSSupport/System/Library/Frameworks" $MACSYSROOT "ios-*-maccatalyst"
 }
 
 build_ios_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : ios : clang++ -arch arm64 -fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION
-: <striper> <root>$IOSSYSROOT 
-: <architecture>arm <target-os>iphone 
-;
-EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/ios-arm64/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-arm64/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-arm64/libicuuc.a $ICU_PATH/lib/
-fi
-./b2 --stagedir=stage/ios toolset=darwin-ios instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+    build_generic_libs ios arm64 "-fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION" $IOSSYSROOT "ios-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_xros_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : xros : clang++ -arch arm64 -fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk
-: <striper> <root>$XROSSYSROOT 
-: <architecture>arm <target-os>iphone 
-;
-EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/xros-arm64/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-arm64/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-arm64/libicuuc.a $ICU_PATH/lib/
-fi
-./b2 --stagedir=stage/xros toolset=darwin-xros instruction-set=arm64 architecture=arm binary-format=mach-o abi=aapcs target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+    build_generic_libs xros arm64 "-fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+}
+
+build_tvos_libs()
+{
+    build_generic_libs tvos arm64 "-fembed-bitcode -isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+}
+
+build_watchos_libs()
+{
+    build_generic_libs watchos arm64 "-fembed-bitcode -isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_sim_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : iossim : clang++ -arch $1 -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk $2
-: <striper> <root>$IOSSIMSYSROOT 
-: <architecture>$(boost_arc $1) <target-os>iphone 
-;
-EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/ios-*-simulator/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/ios-*-simulator/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/ios-*-simulator/libicuuc.a $ICU_PATH/lib/
-fi
-./b2 --stagedir=stage/iossim-$1 toolset=darwin-iossim architecture=$(boost_arc $1) abi=$(boost_abi $1) target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+    build_generic_libs iossim $1 "-mios-simulator-version-min=$IOS_SIM_VERSION -isysroot $IOSSIMSYSROOT/SDKs/iPhoneSimulator.sdk" $IOSSIMSYSROOT "ios-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
 }
 
 build_xrossim_libs()
 {
-if [[ -f tools/build/src/user-config.jam ]]; then
-	rm -f tools/build/src/user-config.jam
-fi
-cat >> tools/build/src/user-config.jam <<EOF
-using darwin : xrossim : clang++ -arch $1 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk $2
-: <striper> <root>$XROSSIMSYSROOT 
-: <architecture>$(boost_arc $1) <target-os>iphone 
-;
-EOF
-if [[ ! -z "${ICU_PATH}" ]]; then
-	cp $ICU_PATH/frameworks/icudata.xcframework/xros-*-simulator/libicudata.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icui18n.xcframework/xros-*-simulator/libicui18n.a $ICU_PATH/lib/
-	cp $ICU_PATH/frameworks/icuuc.xcframework/xros-*-simulator/libicuuc.a $ICU_PATH/lib/
-fi
-./b2 --stagedir=stage/xrossim-$1 toolset=darwin-xrossim architecture=$(boost_arc $1) abi=$(boost_abi $1) target-os=iphone define=BOOST_TEST_NO_MAIN $B2_BUILD_OPTIONS $LIBS_TO_BUILD
-rm -rf bin.v2
+    build_generic_libs xrossim $1 "$2 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
 }
 
-if true; then
-	if [ -d stage/macosx/lib ]; then
-		rm -rf stage/macosx/lib
-	fi
+build_tvossim_libs()
+{
+    build_generic_libs tvossim $1 " --target=$1-apple-tvos$TVOS_SIM_VERSION-simulator -isysroot $TVOSSIMSYSROOT/SDKs/AppleTVSimulator.sdk" $TVOSSIMSYSROOT "tvos-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+}
 
-	build_macos_libs x86_64 $MACOSX_VERSION_X86_64_BUILD_FLAGS
-	build_macos_libs arm64 $MACOSX_VERSION_ARM_BUILD_FLAGS
-	mkdir -p stage/macosx/lib
-fi
+build_watchossim_libs()
+{
+    build_generic_libs watchossim $1 "--target=$1-apple-watchos$WATCHOS_SIM_VERSION-simulator -isysroot $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk" $WATCHOSSIMSYSROOT "watchos-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+}
 
-if true; then
-	if [[ -d stage/catalyst/lib ]]; then
-		rm -rf stage/catalyst/lib
-	fi
-	build_catalyst_libs arm64 arm-apple-ios$CATALYST_VERSION-macabi
-	build_catalyst_libs x86_64 x86_64-apple-ios$CATALYST_VERSION-macabi
-	mkdir -p stage/catalyst/lib
-fi
+[[ -d stage/macosx/lib ]] && rm -rf stage/macosx/lib
+[[ "$BUILD_PLATFORMS" == *"macosx-arm64"* ]] && build_macos_libs arm64 -mmacosx-version-min=$MACOSX_VERSION_ARM
+[[ "$BUILD_PLATFORMS" == *"macosx-x86_64"* ]] && build_macos_libs x86_64 -mmacosx-version-min=$MACOSX_VERSION_X86_64
+[[ "$BUILD_PLATFORMS" == *"macosx"* ]] && mkdir -p stage/macosx/lib
 
-if true; then
-	if [[ -d stage/iossim/lib ]]; then
-		rm -rf stage/iossim/lib
-	fi
-	build_sim_libs arm64 -mios-simulator-version-min=$IOS_SIM_VERSION
-	build_sim_libs x86_64 -mios-simulator-version-min=$IOS_SIM_VERSION
-	mkdir -p stage/iossim/lib
-fi
+[ -d stage/catalyst/lib ] && rm -rf stage/catalyst/lib
+[[ "$BUILD_PLATFORMS" == *"catalyst-arm64"* ]] && build_catalyst_libs arm64
+[[ "$BUILD_PLATFORMS" == *"catalyst-x86_64"* ]] && build_catalyst_libs x86_64
+[[ "$BUILD_PLATFORMS" == *"catalyst"* ]] && mkdir -p stage/catalyst/lib
 
-if [ -d $XROSSIMSYSROOT/SDKs/XRSimulator.sdk ]; then
-	if [[ -d stage/xrossim/lib ]]; then
-		rm -rf stage/xrossim/lib
-	fi
-	build_xrossim_libs arm64
-	build_xrossim_libs x86_64
-	mkdir -p stage/xrossim/lib
-fi
+[ -d stage/iossim/lib ] && rm -rf stage/iossim/lib
+[[ "$BUILD_PLATFORMS" == *"iossim-arm64"* ]] && build_sim_libs arm64
+[[ "$BUILD_PLATFORMS" == *"iossim-x86_64"* ]] && build_sim_libs x86_64
+[[ "$BUILD_PLATFORMS" == *"iossim"* ]] && mkdir -p stage/iossim/lib
 
-build_ios_libs
-if [ -d $XROSSYSROOT ]; then
-    build_xros_libs
-fi
+[ -d stage/xrossim/lib ] && rm -rf stage/xrossim/lib
+[[ "$BUILD_PLATFORMS" == *"xrossim-arm64"* ]] && build_xrossim_libs arm64
+[[ "$BUILD_PLATFORMS" == *"xrossim-x86_64"* ]] && build_xrossim_libs x86_64
+[[ "$BUILD_PLATFORMS" == *"xrossim"* ]] && mkdir -p stage/xrossim/lib
+
+[ -d stage/tvossim/lib ] && rm -rf stage/tvossim/lib
+[[ "$BUILD_PLATFORMS" == *"tvossim-arm64"* ]] && build_tvossim_libs arm64
+[[ "$BUILD_PLATFORMS" == *"tvossim-x86_64"* ]] && build_tvossim_libs x86_64
+[[ "$BUILD_PLATFORMS" == *"tvossim"* ]] && mkdir -p stage/tvossim/lib
+
+[ -d stage/watchossim/lib ] && rm -rf stage/watchossim/lib
+[[ "$BUILD_PLATFORMS" == *"watchossim-arm64"* ]] && build_watchossim_libs arm64
+[[ "$BUILD_PLATFORMS" == *"watchossim-x86_64"* ]] && build_watchossim_libs x86_64
+[[ "$BUILD_PLATFORMS" == *"watchossim"* ]] && mkdir -p stage/watchossim/lib
+
+[[ "$BUILD_PLATFORMS" == *"ios "* ]] && build_ios_libs
+[[ "$BUILD_PLATFORMS" == *"xros "* ]] && build_xros_libs
+[[ "$BUILD_PLATFORMS" == *"tvos "* ]] && build_tvos_libs
+[[ "$BUILD_PLATFORMS" == *"watchos "* ]] && build_watchos_libs
 
 echo installing boost...
-if [[ -d "$BUILD_DIR/frameworks" ]]; then
-    rm -rf "$BUILD_DIR/frameworks"
-fi
-
+[[ -d "$BUILD_DIR/frameworks" ]] && rm -rf "$BUILD_DIR/frameworks"
 mkdir "$BUILD_DIR/frameworks"
+
+build_lib()
+{
+	if [[ "$BUILD_PLATFORMS" == *"$2-arm64"* ]]; then
+		if [[ "$BUILD_PLATFORMS" == *"$2-x86_64"* ]]; then
+			lipo -create stage/$2-arm64/lib/lib$1.a stage/$2-x86_64/lib/lib$1.a -output stage/$2/lib/lib$1.a
+			LIBARGS="$LIBARGS -library stage/$2/lib/lib$1.a"
+		else
+			LIBARGS="$LIBARGS -library stage/$2-arm64/lib/lib$1.a"
+		fi
+	else
+		[[ "$BUILD_PLATFORMS" == *"$2-x86_64"* ]] && LIBARGS="$LIBARGS -library stage/$2-x86_64/lib/lib$1.a"
+	fi
+}
 
 build_xcframework()
 {
-	lipo -create stage/macosx-arm64/lib/lib$1.a stage/macosx-x86_64/lib/lib$1.a -output stage/macosx/lib/lib$1.a
-	lipo -create stage/catalyst-arm64/lib/lib$1.a stage/catalyst-x86_64/lib/lib$1.a -output stage/catalyst/lib/lib$1.a
-	lipo -create stage/iossim-arm64/lib/lib$1.a stage/iossim-x86_64/lib/lib$1.a -output stage/iossim/lib/lib$1.a
-    LIBARGS="-library stage/macosx/lib/lib$1.a -library stage/catalyst/lib/lib$1.a -library stage/ios/lib/lib$1.a -library stage/iossim/lib/lib$1.a"
-    
-    if [ -d $XROSSIMSYSROOT/SDKs/XRSimulator.sdk ]; then
-        lipo -create stage/xrossim-arm64/lib/lib$1.a stage/xrossim-x86_64/lib/lib$1.a -output stage/xrossim/lib/lib$1.a
-        LIBARGS="$LIBARGS -library stage/xrossim/lib/lib$1.a"
-    fi
-    if [ -d $XROSSYSROOT/SDKs/XROS.sdk ]; then
-        LIBARGS="$LIBARGS -library stage/xros/lib/lib$1.a"
-    fi
-	xcodebuild -create-xcframework $LIBARGS -output "$BUILD_DIR/frameworks/$1.xcframework"
+	LIBARGS=
+	[[ "$BUILD_PLATFORMS" == *macosx* ]] && build_lib $1 macosx
+	[[ "$BUILD_PLATFORMS" == *catalyst* ]] && build_lib $1 catalyst
+	[[ "$BUILD_PLATFORMS" == *iossim* ]] && build_lib $1 iossim
+	[[ "$BUILD_PLATFORMS" == *xrossim* ]] && build_lib $1 xrossim
+    [[ "$BUILD_PLATFORMS" == *tvossim* ]] && build_lib $1 tvossim
+    [[ "$BUILD_PLATFORMS" == *watchossim* ]] && build_lib $1 watchossim
+	[[ "$BUILD_PLATFORMS" == *"ios "* ]] && LIBARGS="$LIBARGS -library stage/ios-arm64/lib/lib$1.a"
+	[[ "$BUILD_PLATFORMS" == *"xros "* ]] && LIBARGS="$LIBARGS -library stage/xros-arm64/lib/lib$1.a"
+    [[ "$BUILD_PLATFORMS" == *"tvos "* ]] && LIBARGS="$LIBARGS -library stage/tvos-arm64/lib/lib$1.a"
+    [[ "$BUILD_PLATFORMS" == *"watchos "* ]] && LIBARGS="$LIBARGS -library stage/watchos-arm64/lib/lib$1.a"
+    xcodebuild -create-xcframework $LIBARGS -output "$BUILD_DIR/frameworks/$1.xcframework"
 }
 
 if true; then
-build_xcframework boost_atomic
-build_xcframework boost_charconv
-build_xcframework boost_chrono
-if [[ $CLANG15 ]]; then
-    build_xcframework boost_cobalt
-fi
-build_xcframework boost_container
-build_xcframework boost_context
-build_xcframework boost_contract
-build_xcframework boost_coroutine
-build_xcframework boost_date_time
-build_xcframework boost_exception
-build_xcframework boost_fiber
-build_xcframework boost_filesystem
-build_xcframework boost_graph
-build_xcframework boost_iostreams
-build_xcframework boost_json
-build_xcframework boost_locale
-build_xcframework boost_log
-build_xcframework boost_log_setup
-build_xcframework boost_math_c99
-build_xcframework boost_math_c99l
-build_xcframework boost_math_c99f
-build_xcframework boost_math_tr1
-build_xcframework boost_math_tr1l
-build_xcframework boost_math_tr1f
-build_xcframework boost_nowide
-build_xcframework boost_program_options
-build_xcframework boost_random
-build_xcframework boost_regex
-build_xcframework boost_serialization
-build_xcframework boost_wserialization
-#build_xcframework boost_stacktrace_addr2line
-build_xcframework boost_stacktrace_basic
-build_xcframework boost_stacktrace_noop
-build_xcframework boost_system
-build_xcframework boost_prg_exec_monitor
-build_xcframework boost_test_exec_monitor
-build_xcframework boost_unit_test_framework
-build_xcframework boost_thread
-build_xcframework boost_timer
-build_xcframework boost_type_erasure
-build_xcframework boost_url
-build_xcframework boost_wave
+for i in $LIBS_TO_BUILD; do :;
+	if [ $i == "math" ]; then
+		build_xcframework boost_math_c99
+		build_xcframework boost_math_c99l
+		build_xcframework boost_math_c99f
+		build_xcframework boost_math_tr1
+		build_xcframework boost_math_tr1l
+		build_xcframework boost_math_tr1f
+	elif [ $i == "log" ]; then
+		build_xcframework boost_log
+		build_xcframework boost_log_setup
+	elif [ $i == "stacktrace" ]; then
+		build_xcframework boost_stacktrace_basic
+		build_xcframework boost_stacktrace_noop
+		#build_xcframework boost_stacktrace_addr2line
+	elif [ $i == "serialization" ]; then
+		build_xcframework boost_serialization
+		build_xcframework boost_wserialization
+	elif [ $i == "test" ]; then
+		build_xcframework boost_prg_exec_monitor
+		build_xcframework boost_test_exec_monitor
+		build_xcframework boost_unit_test_framework
+	else
+	    build_xcframework "boost_$i"
+	fi
+done
+
 
 mkdir "$BUILD_DIR/frameworks/Headers"
 cp -R boost "$BUILD_DIR/frameworks/Headers/"
 #mv boost "$BUILD_DIR/frameworks/Headers/"
-touch "$BUILD_DIR/frameworks.built"
+#touch "$BUILD_DIR/frameworks.built"
 fi
 
 #rm -rf "$BUILD_DIR/boost"
 
 popd
 
-fi
+#fi

@@ -1,17 +1,26 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.86.0.2"
-    s.summary      = "Boost C++ libraries for macOS, iOS, and visionOS, including both arm64 and x86_64 builds for macOS, Mac Catalyst, iOS Simulator, and visionOS Simulator."
+    s.version      = "1.86.0.3"
+    s.summary      = "Boost C++ libraries for macOS, iOS, watchOS, tvOS, and visionOS, including builds for Mac Catalyst, iOS Simulator, watchOS Simulator, tvOS Simulator, and visionOS Simulator."
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"
     s.author       = { "Alexander Pototskiy" => "alex.a.potocki@gmail.com" }
     s.social_media_url = "https://www.linkedin.com/in/alexander-pototskiy"
-    s.osx.deployment_target = "11.0"
     s.ios.deployment_target = "13.4"
+    s.osx.deployment_target = "11.0"
+    s.tvos.deployment_target = "13.0"
+    s.watchos.deployment_target = "11.0"
     s.visionos.deployment_target = "1.0"
-    s.osx.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
     s.ios.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.osx.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.tvos.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.watchos.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
     s.visionos.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.ios.user_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.osx.user_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.tvos.user_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.watchos.user_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
+    s.visionos.user_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
     s.static_framework = true
     s.prepare_command = "sh scripts/build.sh"
     s.source       = { :git => "https://github.com/apotocki/boost-iosx.git", :tag => "#{s.version}" }
