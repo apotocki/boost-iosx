@@ -1,5 +1,7 @@
 [<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="20">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOy1/J2UNxol24jC55Gyexr3rNLYDZVU9MuRUJkREFPXXSygUzlVxf+gPiv5ep+qrlKN3gaapwfsbHOGtArzt5mT2rtMs5PQgi81373d/yGXDIsHKjge8C1k+BE2l45liQg==)
 
+[<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="40">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOy1/J2UNxol24jC55Gyexr3rNLYDZVU9MuRUJkREFPXXSygUzlVxf+gPiv5ep+qrlKN3gaapwfsbHOGtArzt5mT2rtMs5PQgi81373d/yGXDIsHKjge8C1k+BE2l45liQg==)
+
 # Boost C++ for iOS, visionOS, macOS (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
 Supported versions: 1.87.0, 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
