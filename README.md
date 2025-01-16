@@ -1,4 +1,5 @@
-[<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="40">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOy1/J2UNxol24jC55Gyexr3rNLYDZVU9MuRUJkREFPXXSygUzlVxf+gPiv5ep+qrlKN3gaapwfsbHOGtArzt5mT2rtMs5PQgi81373d/yGXDIsHKjge8C1k+BE2l45liQg==)
+[<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="50">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOxgKKmeFGEAhZKkOovc5a01rqJx44vBptpuac/yQXd7r5abbr2T3FwVMOH2fx8m6/ps0kdNQqgPSszlMZUc/AE2OrKAt+XzcR1anMOf32ycdE/w3PxfxZVs5AvFtpjQ9YA==)
+[<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="50">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOxgKKmeFGEAhZKkOovc5a01rqJx44vBptpuac/yQXd7r5abbr2T3FwVMOH2fx8m6/ps0kdNQqgPSszlMZUc/AE2OrKAt+XzcR1anMOf32ycdE/w3PxfxZVs5AvFtpjQ9YA==)
 
 # Boost C++ for iOS, visionOS, macOS (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
