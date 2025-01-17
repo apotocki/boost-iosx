@@ -7,7 +7,7 @@ This repo provides a universal script for building static Boost C++ libraries fo
 Since the Boost distribution URLs are often broken and change, the script tries to download it from the links specified in the LOCATIONS file in the master branch. Only after the SHA256 hash of the downloaded archive is verified, the libraries are unpacked and compiled.
 
 ## Building libraries
-atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
+atomic, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
 
 ## Not building libraries
 graph_parallel, mpi, python
@@ -17,7 +17,7 @@ graph_parallel, mpi, python
   2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
   ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
   3) You should not have your own user-config.jam file in your home directory!
-  4) For the creation of visionOS related artifacts and their integration into the resulting xcframeworks, XROS.platform and XRSimulator.platform should be available in the folder: /Applications/Xcode.app/Contents/Developer/Platforms
+  4) Building for tvOS, watchOS, visionOS and their simulators requires the appropriate SDKs to be installed in the folder /Applications/Xcode.app/Contents/Developer/Platforms
 
 ## Building notes
 1) The 'locale' and 'regex' libraries are built using the ICU backend. There are two ways to get it. The first (default) is when the ICU libraries are automatically built before Boost is built using the build script from https://github.com/apotocki/icu4c-iosx . The second is by specifying the ICU4C_RELEASE_LINK environment variable where prebuit binaries can be downloaded from.
@@ -77,7 +77,7 @@ Add the following lines into your project's Podfile:
     use_frameworks!
     pod 'boost-iosx', '~> 1.84.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.84.0.6'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.84.0.7'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
