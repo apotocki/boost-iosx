@@ -17,10 +17,10 @@ graph_parallel, mpi, python
   2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
   ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
   3) You should not have your own user-config.jam file in your home directory!
-  4) For the creation of visionOS related artifacts and their integration into the resulting xcframeworks, XROS.platform and XRSimulator.platform should be available in the folder: /Applications/Xcode.app/Contents/Developer/Platforms
+  4) Building for tvOS, watchOS, visionOS and their simulators requires the appropriate SDKs to be installed in the folder /Applications/Xcode.app/Contents/Developer/Platforms
 
 ## Building notes
-1) The 'locale' and 'regex' libraries are built using the ICU backend. ICU build scripts are taken from https://github.com/apotocki/icu4c-iosx and run using the 'pod' utility.
+1) The 'locale' and 'regex' libraries are built using the ICU backend. There are two ways to get it. The first (default) is when the ICU libraries are automatically built before Boost is built using the build script from https://github.com/apotocki/icu4c-iosx . The second is by specifying the ICU4C_RELEASE_LINK environment variable where prebuit binaries can be downloaded from.
 2) The 'test' library is built for iOS and visionOS with the BOOST_TEST_NO_MAIN flag.
 3) The 'test' library is built for watchOS and tvOS with the BOOST_TEST_NO_MAIN and BOOST_TEST_DISABLE_ALT_STACK flags.
 
@@ -33,14 +33,14 @@ graph_parallel, mpi, python
     cd boost-iosx
     scripts/build.sh
     
-    # However, if you wish, you can skip building the ICU library during the boost build and use pre-built binaries from my ICU repository:
+    # However, if you wish, you can skip building the ICU libraries during the boost build and use pre-built binaries from my ICU repository:
     # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4 scripts/build.sh
-        
+    
     # have fun, the result artifacts will be located in 'frameworks' folder.
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
 ```
 # Selecting Platforms and Architectures
-build.sh without arguments will build xcframeworks for iOS, macOS, Catalyst and also for watchOS, tvOS, visionOS if their SDKs are installed on the system. It will also build xcframeworks for their simulators with the architecture (arm64 or x86_64) depending on the current host.
+build.sh without arguments builds xcframeworks for iOS, macOS, Catalyst and also for watchOS, tvOS, visionOS if their SDKs are installed on the system. It also builds xcframeworks for their simulators with the architecture (arm64 or x86_64) depending on the current host.
 If you are interested in a specific set of platforms and architectures, you can specify them explicitly using the -p argument, for example:
 ```
 scripts/build.sh -p=ios,iossim-x86_64
@@ -59,6 +59,11 @@ If you want to build specific boost libraries, specify them with the -l option:
 scripts/build.sh -l=log,program_options
 # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add them all in the -l option.
 ```
+## Rebuild ICU option
+To rebuild the ICU library, which is used when building some Boost libraries (locale and regex), use the --rebuildicu option.
+```
+scripts/build.sh -p=ios,iossim-x86_64 --rebuildicu
+```
 ## Rebuild option
 To rebuild the libraries without using the results of previous builds, use the --rebuild option
 ```
@@ -72,7 +77,7 @@ Add the following lines into your project's Podfile:
     use_frameworks!
     pod 'boost-iosx', '~> 1.86.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.86.0.3'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.86.0.4'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
@@ -85,7 +90,7 @@ Then install new dependencies:
    pod install --verbose
 ```
 
-## As an advertisement…
+## As an advertisement...
 The Boost libraries built by this project are used in my iOS application on the App Store:
 
 [<table align="center" border=0 cellspacing=0 cellpadding=0><tr><td><img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70"/></td><td><a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br>HEX File Viewer & Editor</td><tr></table>]()

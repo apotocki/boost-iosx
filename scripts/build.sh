@@ -27,7 +27,7 @@ TVOSSIMSYSROOT=$XCODE_ROOT/Platforms/AppleTVSimulator.platform/Developer
 WATCHOSSYSROOT=$XCODE_ROOT/Platforms/WatchOS.platform/Developer
 WATCHOSSIMSYSROOT=$XCODE_ROOT/Platforms/WatchSimulator.platform/Developer
 
-LIBS_TO_BUILD_ALL="charconv,atomic,chrono,container,context,contract,coroutine,date_time,exception,fiber,filesystem,graph,iostreams,json,locale,log,math,nowide,program_options,random,regex,serialization,stacktrace,system,test,thread,timer,type_erasure,wave,url,cobalt"
+LIBS_TO_BUILD_ALL="atomic,chrono,container,context,contract,coroutine,date_time,exception,fiber,filesystem,graph,iostreams,json,locale,log,math,nowide,program_options,random,regex,serialization,stacktrace,system,test,thread,timer,type_erasure,wave,url,cobalt,charconv"
 
 BUILD_PLATFORMS_ALL="macosx,macosx-arm64,macosx-x86_64,macosx-both,ios,iossim,iossim-arm64,iossim-x86_64,iossim-both,catalyst,catalyst-arm64,catalyst-x86_64,catalyst-both,xros,xrossim,xrossim-arm64,xrossim-x86_64,xrossim-both,tvos,tvossim,tvossim-both,tvossim-arm64,tvossim-x86_64,watchos,watchossim,watchossim-both,watchossim-arm64,watchossim-x86_64"
 
@@ -48,6 +48,42 @@ BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
 [[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
 [[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
 
+boost_arc()
+{
+    if [[ $1 == arm* ]]; then
+		echo "arm"
+	elif [[ $1 == x86* ]]; then
+		echo "x86"
+	else
+		echo "unknown"
+	fi
+}
+
+boost_abi()
+{
+    if [[ $1 == arm64 ]]; then
+		echo "aapcs"
+	elif [[ $1 == x86_64 ]]; then
+		echo "sysv"
+	else
+		echo "unknown"
+	fi
+}
+
+is_subset() {
+    local mainset=($(< $1))
+    shift
+    local subset=("$@")
+    
+    for element in "${subset[@]}"; do
+        if [[ ! " ${mainset[@]} " =~ " ${element} " ]]; then
+            echo "false"
+            return
+        fi
+    done
+    echo "true"
+}
+
 # parse command line
 for i in "$@"; do
   case $i in
@@ -61,7 +97,12 @@ for i in "$@"; do
       ;;
     --rebuild)
       REBUILD=true
-      #[ -f "$BUILD_DIR/frameworks.built" ] && rm "$BUILD_DIR/frameworks.built"
+      [[ -f "$BUILD_DIR/frameworks.built.platforms" ]] && rm "$BUILD_DIR/frameworks.built.platforms"
+      [[ -f "$BUILD_DIR/frameworks.built.libs" ]] && rm "$BUILD_DIR/frameworks.built.libs"
+      shift # past argument with no value
+      ;;
+    --rebuildicu)
+      [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
       shift # past argument with no value
       ;;
     -*|--*)
@@ -73,44 +114,80 @@ for i in "$@"; do
   esac
 done
 
-#if [ ! -f "$BUILD_DIR/frameworks.built" ]; then
-
 LIBS_TO_BUILD=${LIBS_TO_BUILD//,/ }
 
-#sort and hash the library list
+#sort the library list
 LIBS_TO_BUILD_ARRAY=($LIBS_TO_BUILD)
 IFS=$'\n' LIBS_TO_BUILD_SORTED_ARRAY=($(sort <<<"${LIBS_TO_BUILD_ARRAY[*]}")); unset IFS
 LIBS_TO_BUILD_SORTED="${LIBS_TO_BUILD_SORTED_ARRAY[@]}"
 #LIBS_HASH=$( echo -n $LIBS_TO_BUILD_SORTED | shasum -a 256 | awk '{ print $1 }' )
-LIBS_HASH=$LIBS_TO_BUILD_SORTED
 
 for i in $LIBS_TO_BUILD; do :;
 if [[ ! ",$LIBS_TO_BUILD_ALL," == *",$i,"* ]]; then
 	echo "Unknown library '$i'"
-	exi1 1
+	exit 1
 fi
 done
 
-[[ "$BUILD_PLATFORMS" == *macosx-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,macosx-arm64,macosx-x86_64"
-[[ "$BUILD_PLATFORMS" == *iossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,iossim-arm64,iossim-x86_64"
-[[ "$BUILD_PLATFORMS" == *catalyst-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,catalyst-arm64,catalyst-x86_64"
-[[ "$BUILD_PLATFORMS" == *xrossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xrossim-arm64,xrossim-x86_64"
-[[ "$BUILD_PLATFORMS" == *tvossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim-arm64,tvossim-x86_64"
-[[ "$BUILD_PLATFORMS" == *watchossim-both* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-arm64,watchossim-x86_64"
-[[ "$BUILD_PLATFORMS," == *"macosx,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,macosx-$HOST_ARC"
-[[ "$BUILD_PLATFORMS," == *"iossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,iossim-$HOST_ARC"
-[[ "$BUILD_PLATFORMS," == *"catalyst,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,catalyst-$HOST_ARC"
-[[ "$BUILD_PLATFORMS," == *"xrossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,xrossim-$HOST_ARC"
-[[ "$BUILD_PLATFORMS," == *"tvossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim-$HOST_ARC"
-[[ "$BUILD_PLATFORMS," == *"watchossim,"* ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-$HOST_ARC"
-BUILD_PLATFORMS=" ${BUILD_PLATFORMS//,/ } "
+[[ $BUILD_PLATFORMS == *macosx-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//macosx-both/},macosx-arm64,macosx-x86_64"
+[[ $BUILD_PLATFORMS == *iossim-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//iossim-both/},iossim-arm64,iossim-x86_64"
+[[ $BUILD_PLATFORMS == *catalyst-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//catalyst-both/},catalyst-arm64,catalyst-x86_64"
+[[ $BUILD_PLATFORMS == *xrossim-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//xrossim-both/},xrossim-arm64,xrossim-x86_64"
+[[ $BUILD_PLATFORMS == *tvossim-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//tvossim-both/},tvossim-arm64,tvossim-x86_64"
+[[ $BUILD_PLATFORMS == *watchossim-both* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//watchossim-both/},watchossim-arm64,watchossim-x86_64"
+BUILD_PLATFORMS="$BUILD_PLATFORMS,"
+[[ $BUILD_PLATFORMS == *"macosx,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//macosx,/,},macosx-$HOST_ARC"
+[[ $BUILD_PLATFORMS == *"iossim,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//iossim,/,},iossim-$HOST_ARC"
+[[ $BUILD_PLATFORMS == *"catalyst,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//catalyst,/,},catalyst-$HOST_ARC"
+[[ $BUILD_PLATFORMS == *"xrossim,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//xrossim,/,},xrossim-$HOST_ARC"
+[[ $BUILD_PLATFORMS == *"tvossim,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//tvossim,/,},tvossim-$HOST_ARC"
+[[ $BUILD_PLATFORMS == *"watchossim,"* ]] && BUILD_PLATFORMS="${BUILD_PLATFORMS//watchossim,/,},watchossim-$HOST_ARC"
 
-for i in $BUILD_PLATFORMS; do :;
+if [[ $BUILD_PLATFORMS == *"xros,"* ]] && [[ ! -d $XROSSYSROOT/SDKs/XROS.sdk ]]; then
+    echo "The xros is specified as the build platform, but XROS.sdk is not found (the path $XROSSYSROOT/SDKs/XROS.sdk)."
+    exit 1
+fi
+
+if [[ $BUILD_PLATFORMS == *"xrossim"* ]] && [[ ! -d $XROSSIMSYSROOT/SDKs/XRSimulator.sdk ]]; then
+    echo "The xrossim is specified as the build platform, but XRSimulator.sdk is not found (the path $XROSSIMSYSROOT/SDKs/XRSimulator.sdk)."
+    exit 1
+fi
+
+if [[ $BUILD_PLATFORMS == *"tvos,"* ]] && [[ ! -d $TVOSSYSROOT/SDKs/AppleTVOS.sdk ]]; then
+    echo "The tvos is specified as the build platform, but AppleTVOS.sdk is not found (the path $TVOSSYSROOT/SDKs/AppleTVOS.sdk)."
+    exit 1
+fi
+
+if [[ $BUILD_PLATFORMS == *"tvossim"* ]] && [[ ! -d $TVOSSIMSYSROOT/SDKs/AppleTVSimulator.sdk ]]; then
+    echo "The tvossim is specified as the build platform, but AppleTVSimulator.sdk is not found (the path $TVOSSIMSYSROOT/SDKs/AppleTVSimulator.sdk)."
+    exit 1
+fi
+
+if [[ $BUILD_PLATFORMS == *"watchos,"* ]] && [[ ! -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]]; then
+    echo "The tvos is specified as the build platform, but WatchOS.sdk is not found (the path $WATCHOSSYSROOT/SDKs/WatchOS.sdk)."
+    exit 1
+fi
+
+if [[ $BUILD_PLATFORMS == *"watchossim"* ]] && [[ ! -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]]; then
+    echo "The tvos is specified as the build platform, but WatchSimulator.sdk is not found (the path $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk)."
+    exit 1
+fi
+
+BUILD_PLATFORMS_SPACED=" ${BUILD_PLATFORMS//,/ } "
+BUILD_PLATFORMS_ARRAY=($BUILD_PLATFORMS_SPACED)
+
+for i in $BUILD_PLATFORMS_SPACED; do :;
 if [[ ! ",$BUILD_PLATFORMS_ALL," == *",$i,"* ]]; then
 	echo "Unknown platform '$i'"
-	exi1 1
+	exit 1
 fi
 done
+
+[[ -f "$BUILD_DIR/frameworks.built.platforms" ]] && [[ -f "$BUILD_DIR/frameworks.built.libs" ]] && [[ $(< $BUILD_DIR/frameworks.built.platforms) == $BUILD_PLATFORMS ]] && [[ $(< $BUILD_DIR/frameworks.built.libs) == $LIBS_TO_BUILD ]] && exit 0
+
+[[ -f "$BUILD_DIR/frameworks.built.platforms" ]] && rm "$BUILD_DIR/frameworks.built.platforms"
+[[ -f "$BUILD_DIR/frameworks.built.libs" ]] && rm "$BUILD_DIR/frameworks.built.libs"
+
 
 BOOST_ARCHIVE_FILE=$BOOST_NAME.tar.bz2
 
@@ -171,7 +248,7 @@ fi
 ############### ICU
 if true; then
 #export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
-if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
+if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/build.success ]] || [[ $(is_subset $SCRIPT_DIR/Pods/icu4c-iosx/build.success "${BUILD_PLATFORMS_ARRAY[@]}") == "false" ]]; then
     if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
 		[[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
 		mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
@@ -192,12 +269,30 @@ if [[ ! -d $SCRIPT_DIR/Pods/icu4c-iosx/product ]]; then
         #mv icuio.xcframework frameworks/
         mv icuuc.xcframework frameworks/
         popd
+        printf "${BUILD_PLATFORMS_ALL//,/ }" > build.success
     else
-        pushd $SCRIPT_DIR
-        pod repo update
-        pod install --verbose
-        #pod update --verbose
+        if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/everbuilt.success ]]; then
+            [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
+            [[ ! -d $SCRIPT_DIR/Pods ]] && mkdir $SCRIPT_DIR/Pods
+            pushd $SCRIPT_DIR/Pods
+            git clone https://github.com/apotocki/icu4c-iosx
+        else
+            pushd $SCRIPT_DIR/Pods/icu4c-iosx
+            git pull
+        fi
         popd
+        
+        pushd $SCRIPT_DIR/Pods/icu4c-iosx
+        scripts/build.sh -p=$BUILD_PLATFORMS
+        touch everbuilt.success
+        printf "${BUILD_PLATFORMS//,/ }" > build.success
+        popd
+        
+        #pushd $SCRIPT_DIR
+        #pod repo update
+        #pod install --verbose
+        ##pod update --verbose
+        #popd
     fi
     mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
@@ -238,36 +333,14 @@ for i in $LIBS_TO_BUILD; do :;
   B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS --with-$i"
 done
 
-if true; then
-    [ -d bin.v2 ] && rm -rf bin.v2
-fi
+[[ -d bin.v2 ]] && rm -rf bin.v2
 
-function boost_arc()
-{
-    if [[ $1 == arm* ]]; then
-		echo "arm"
-	elif [[ $1 == x86* ]]; then
-		echo "x86"
-	else
-		echo "unknown"
-	fi
-}
-
-function boost_abi()
-{
-    if [[ $1 == arm64 ]]; then
-		echo "aapcs"
-	elif [[ $1 == x86_64 ]]; then
-		echo "sysv"
-	else
-		echo "unknown"
-	fi
-}
 
 #(paltform=$1 architecture=$2 additional_flags=$3 root=$4 depfilter=$5 additional_config=$6 additional_b2flags=$7)
 build_generic_libs()
 {
-if [[ $REBUILD == true ]] || [[ ! -f $1-$2-build.success ]] || [[ "$(< $1-$2-build.success)" != "$LIBS_HASH" ]]; then
+if [[ $REBUILD == true ]] || [[ ! -f $1-$2-build.success ]] || [[ $(is_subset $1-$2-build.success "${LIBS_TO_BUILD_ARRAY[@]}") == "false" ]]; then
+
     [[ -f $1-$2-build.success ]] && rm $1-$2-build.success
     
     [[ -f tools/build/src/user-config.jam ]] && rm -f tools/build/src/user-config.jam
@@ -285,7 +358,7 @@ EOF
     fi
     ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) $7 $B2_BUILD_OPTIONS
     rm -rf bin.v2
-    printf "$LIBS_HASH" > $1-$2-build.success
+    printf "$LIBS_TO_BUILD_SORTED" > $1-$2-build.success
 fi
 }
 
@@ -340,39 +413,39 @@ build_watchossim_libs()
 }
 
 [[ -d stage/macosx/lib ]] && rm -rf stage/macosx/lib
-[[ "$BUILD_PLATFORMS" == *"macosx-arm64"* ]] && build_macos_libs arm64 -mmacosx-version-min=$MACOSX_VERSION_ARM
-[[ "$BUILD_PLATFORMS" == *"macosx-x86_64"* ]] && build_macos_libs x86_64 -mmacosx-version-min=$MACOSX_VERSION_X86_64
-[[ "$BUILD_PLATFORMS" == *"macosx"* ]] && mkdir -p stage/macosx/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"macosx-arm64"* ]] && build_macos_libs arm64 -mmacosx-version-min=$MACOSX_VERSION_ARM
+[[ "$BUILD_PLATFORMS_SPACED" == *"macosx-x86_64"* ]] && build_macos_libs x86_64 -mmacosx-version-min=$MACOSX_VERSION_X86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"macosx"* ]] && mkdir -p stage/macosx/lib
 
 [ -d stage/catalyst/lib ] && rm -rf stage/catalyst/lib
-[[ "$BUILD_PLATFORMS" == *"catalyst-arm64"* ]] && build_catalyst_libs arm64
-[[ "$BUILD_PLATFORMS" == *"catalyst-x86_64"* ]] && build_catalyst_libs x86_64
-[[ "$BUILD_PLATFORMS" == *"catalyst"* ]] && mkdir -p stage/catalyst/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"catalyst-arm64"* ]] && build_catalyst_libs arm64
+[[ "$BUILD_PLATFORMS_SPACED" == *"catalyst-x86_64"* ]] && build_catalyst_libs x86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"catalyst"* ]] && mkdir -p stage/catalyst/lib
 
 [ -d stage/iossim/lib ] && rm -rf stage/iossim/lib
-[[ "$BUILD_PLATFORMS" == *"iossim-arm64"* ]] && build_sim_libs arm64
-[[ "$BUILD_PLATFORMS" == *"iossim-x86_64"* ]] && build_sim_libs x86_64
-[[ "$BUILD_PLATFORMS" == *"iossim"* ]] && mkdir -p stage/iossim/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"iossim-arm64"* ]] && build_sim_libs arm64
+[[ "$BUILD_PLATFORMS_SPACED" == *"iossim-x86_64"* ]] && build_sim_libs x86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"iossim"* ]] && mkdir -p stage/iossim/lib
 
 [ -d stage/xrossim/lib ] && rm -rf stage/xrossim/lib
-[[ "$BUILD_PLATFORMS" == *"xrossim-arm64"* ]] && build_xrossim_libs arm64
-[[ "$BUILD_PLATFORMS" == *"xrossim-x86_64"* ]] && build_xrossim_libs x86_64
-[[ "$BUILD_PLATFORMS" == *"xrossim"* ]] && mkdir -p stage/xrossim/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"xrossim-arm64"* ]] && build_xrossim_libs arm64
+[[ "$BUILD_PLATFORMS_SPACED" == *"xrossim-x86_64"* ]] && build_xrossim_libs x86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"xrossim"* ]] && mkdir -p stage/xrossim/lib
 
 [ -d stage/tvossim/lib ] && rm -rf stage/tvossim/lib
-[[ "$BUILD_PLATFORMS" == *"tvossim-arm64"* ]] && build_tvossim_libs arm64
-[[ "$BUILD_PLATFORMS" == *"tvossim-x86_64"* ]] && build_tvossim_libs x86_64
-[[ "$BUILD_PLATFORMS" == *"tvossim"* ]] && mkdir -p stage/tvossim/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"tvossim-arm64"* ]] && build_tvossim_libs arm64
+[[ "$BUILD_PLATFORMS_SPACED" == *"tvossim-x86_64"* ]] && build_tvossim_libs x86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"tvossim"* ]] && mkdir -p stage/tvossim/lib
 
 [ -d stage/watchossim/lib ] && rm -rf stage/watchossim/lib
-[[ "$BUILD_PLATFORMS" == *"watchossim-arm64"* ]] && build_watchossim_libs arm64
-[[ "$BUILD_PLATFORMS" == *"watchossim-x86_64"* ]] && build_watchossim_libs x86_64
-[[ "$BUILD_PLATFORMS" == *"watchossim"* ]] && mkdir -p stage/watchossim/lib
+[[ "$BUILD_PLATFORMS_SPACED" == *"watchossim-arm64"* ]] && build_watchossim_libs arm64
+[[ "$BUILD_PLATFORMS_SPACED" == *"watchossim-x86_64"* ]] && build_watchossim_libs x86_64
+[[ "$BUILD_PLATFORMS_SPACED" == *"watchossim"* ]] && mkdir -p stage/watchossim/lib
 
-[[ "$BUILD_PLATFORMS" == *"ios "* ]] && build_ios_libs
-[[ "$BUILD_PLATFORMS" == *"xros "* ]] && build_xros_libs
-[[ "$BUILD_PLATFORMS" == *"tvos "* ]] && build_tvos_libs
-[[ "$BUILD_PLATFORMS" == *"watchos "* ]] && build_watchos_libs
+[[ "$BUILD_PLATFORMS_SPACED" == *"ios "* ]] && build_ios_libs
+[[ "$BUILD_PLATFORMS_SPACED" == *"xros "* ]] && build_xros_libs
+[[ "$BUILD_PLATFORMS_SPACED" == *"tvos "* ]] && build_tvos_libs
+[[ "$BUILD_PLATFORMS_SPACED" == *"watchos "* ]] && build_watchos_libs
 
 echo installing boost...
 [[ -d "$BUILD_DIR/frameworks" ]] && rm -rf "$BUILD_DIR/frameworks"
@@ -380,31 +453,31 @@ mkdir "$BUILD_DIR/frameworks"
 
 build_lib()
 {
-	if [[ "$BUILD_PLATFORMS" == *"$2-arm64"* ]]; then
-		if [[ "$BUILD_PLATFORMS" == *"$2-x86_64"* ]]; then
+	if [[ "$BUILD_PLATFORMS_SPACED" == *"$2-arm64"* ]]; then
+		if [[ "$BUILD_PLATFORMS_SPACED" == *"$2-x86_64"* ]]; then
 			lipo -create stage/$2-arm64/lib/lib$1.a stage/$2-x86_64/lib/lib$1.a -output stage/$2/lib/lib$1.a
 			LIBARGS="$LIBARGS -library stage/$2/lib/lib$1.a"
 		else
 			LIBARGS="$LIBARGS -library stage/$2-arm64/lib/lib$1.a"
 		fi
 	else
-		[[ "$BUILD_PLATFORMS" == *"$2-x86_64"* ]] && LIBARGS="$LIBARGS -library stage/$2-x86_64/lib/lib$1.a"
+		[[ "$BUILD_PLATFORMS_SPACED" == *"$2-x86_64"* ]] && LIBARGS="$LIBARGS -library stage/$2-x86_64/lib/lib$1.a"
 	fi
 }
 
 build_xcframework()
 {
 	LIBARGS=
-	[[ "$BUILD_PLATFORMS" == *macosx* ]] && build_lib $1 macosx
-	[[ "$BUILD_PLATFORMS" == *catalyst* ]] && build_lib $1 catalyst
-	[[ "$BUILD_PLATFORMS" == *iossim* ]] && build_lib $1 iossim
-	[[ "$BUILD_PLATFORMS" == *xrossim* ]] && build_lib $1 xrossim
-    [[ "$BUILD_PLATFORMS" == *tvossim* ]] && build_lib $1 tvossim
-    [[ "$BUILD_PLATFORMS" == *watchossim* ]] && build_lib $1 watchossim
-	[[ "$BUILD_PLATFORMS" == *"ios "* ]] && LIBARGS="$LIBARGS -library stage/ios-arm64/lib/lib$1.a"
-	[[ "$BUILD_PLATFORMS" == *"xros "* ]] && LIBARGS="$LIBARGS -library stage/xros-arm64/lib/lib$1.a"
-    [[ "$BUILD_PLATFORMS" == *"tvos "* ]] && LIBARGS="$LIBARGS -library stage/tvos-arm64/lib/lib$1.a"
-    [[ "$BUILD_PLATFORMS" == *"watchos "* ]] && LIBARGS="$LIBARGS -library stage/watchos-arm64/lib/lib$1.a"
+	[[ "$BUILD_PLATFORMS_SPACED" == *macosx* ]] && build_lib $1 macosx
+	[[ "$BUILD_PLATFORMS_SPACED" == *catalyst* ]] && build_lib $1 catalyst
+	[[ "$BUILD_PLATFORMS_SPACED" == *iossim* ]] && build_lib $1 iossim
+	[[ "$BUILD_PLATFORMS_SPACED" == *xrossim* ]] && build_lib $1 xrossim
+    [[ "$BUILD_PLATFORMS_SPACED" == *tvossim* ]] && build_lib $1 tvossim
+    [[ "$BUILD_PLATFORMS_SPACED" == *watchossim* ]] && build_lib $1 watchossim
+	[[ "$BUILD_PLATFORMS_SPACED" == *"ios "* ]] && LIBARGS="$LIBARGS -library stage/ios-arm64/lib/lib$1.a"
+	[[ "$BUILD_PLATFORMS_SPACED" == *"xros "* ]] && LIBARGS="$LIBARGS -library stage/xros-arm64/lib/lib$1.a"
+    [[ "$BUILD_PLATFORMS_SPACED" == *"tvos "* ]] && LIBARGS="$LIBARGS -library stage/tvos-arm64/lib/lib$1.a"
+    [[ "$BUILD_PLATFORMS_SPACED" == *"watchos "* ]] && LIBARGS="$LIBARGS -library stage/watchos-arm64/lib/lib$1.a"
     xcodebuild -create-xcframework $LIBARGS -output "$BUILD_DIR/frameworks/$1.xcframework"
 }
 
@@ -443,8 +516,9 @@ cp -R boost "$BUILD_DIR/frameworks/Headers/"
 #touch "$BUILD_DIR/frameworks.built"
 fi
 
+printf "$BUILD_PLATFORMS" > $BUILD_DIR/frameworks.built.platforms
+printf "$LIBS_TO_BUILD" > $BUILD_DIR/frameworks.built.libs
+
 #rm -rf "$BUILD_DIR/boost"
 
 popd
-
-#fi
