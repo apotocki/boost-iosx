@@ -14,8 +14,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: |
-        export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.0
-        scripts/build.sh
+        export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
+        scripts/build.sh -p=macosx-both,ios,iossim-both,catalyst-both,xros,xrossim-both,watchos,watchossim-both,tvos,tvossim-both
         for i in frameworks/*.xcframework/; do cd frameworks && zip -9 -r "$(basename -- $i).zip" $(basename -- $i) & done; wait
         cd frameworks
         mv Headers include
