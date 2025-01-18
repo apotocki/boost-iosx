@@ -6,25 +6,48 @@ Supported versions: 1.87.0, 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
-Since the Boost distribution URLs are often broken and change, the script tries to download it from the links specified in the LOCATIONS file. Only after the SHA256 hash of the downloaded archive is verified, the libraries are unpacked and compiled.
+Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links specified in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
 
-## Building libraries
+## Built Libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
 
-## Not building libraries
+## Excluded Libraries
 graph_parallel, mpi, python
 
 ## Prerequisites
-  1) Xcode must be installed because xcodebuild is used to create xcframeworks
-  2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
-  ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
-  3) You should not have your own user-config.jam file in your home directory!
-  4) Building for tvOS, watchOS, visionOS and their simulators requires the appropriate SDKs to be installed in the folder /Applications/Xcode.app/Contents/Developer/Platforms
-  
-## Building notes
-1) The 'locale' and 'regex' libraries are built using the ICU backend. There are two ways to get it. The first (default) is when the ICU libraries are automatically built before Boost is built using the build script from https://github.com/apotocki/icu4c-iosx . The second is by specifying the ICU4C_RELEASE_LINK environment variable where prebuit binaries can be downloaded from.
-2) The 'test' library is built for iOS and visionOS with the BOOST_TEST_NO_MAIN flag.
-3) The 'test' library is built for watchOS and tvOS with the BOOST_TEST_NO_MAIN and BOOST_TEST_DISABLE_ALT_STACK flags.
+
+1. **Install Xcode**: Ensure Xcode is installed, as `xcodebuild` is required to create `xcframeworks`.
+
+2. **Verify Xcode Developer Directory**:
+   - The `xcode-select -p` command must point to the Xcode app's developer directory (e.g., `/Applications/Xcode.app/Contents/Developer`).
+   - If it points to the CommandLineTools directory, reset it using one of the following commands:
+     ```bash
+     sudo xcode-select --reset
+     ```
+     or
+     ```bash
+     sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+     ```
+
+3. **Remove User-Specific Configurations**: Ensure you do not have a `user-config.jam` file in your home directory, as it may interfere with the build process.
+
+4. **Install Required SDKs**: To build for tvOS, watchOS, visionOS, and their simulators, make sure the corresponding SDKs are installed in the folder:
+```
+   /Applications/Xcode.app/Contents/Developer/Platforms
+```  
+## Building Notes
+
+1. **ICU Backend for `locale` and `regex` Libraries**:
+   - These libraries are built using the ICU backend. There are two ways to obtain the ICU libraries:
+     1. **Default Method**: The ICU libraries are automatically built before Boost using the build script available at:
+        [https://github.com/apotocki/icu4c-iosx](https://github.com/apotocki/icu4c-iosx).
+     2. **Prebuilt Binaries**: Specify the `ICU4C_RELEASE_LINK` environment variable to download prebuilt binaries.
+
+2. **`test` Library for iOS and visionOS**:
+   - The `test` library is built with the `BOOST_TEST_NO_MAIN` flag.
+
+3. **`test` Library for watchOS and tvOS**:
+   - The `test` library is built with the `BOOST_TEST_NO_MAIN` and `BOOST_TEST_DISABLE_ALT_STACK` flags.
 
 # Build Manually
 ```
