@@ -211,7 +211,7 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 		link=${linktemplate/FILENAME/"$BOOST_ARCHIVE_FILE"}
 		echo "downloading from $link ..."
 
-	    curl -o "$BOOST_ARCHIVE_FILE" "$link"
+	    curl -o "$BOOST_ARCHIVE_FILE" -L "$link"
 
 	    # Check if the download was successful
 	    if [ $? -eq 0 ]; then
