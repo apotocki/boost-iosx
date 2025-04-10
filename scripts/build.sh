@@ -1,11 +1,11 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.87.0
-EXPECTED_HASH="af57be25cb4c4f4b413ed692fe378affb4352ea50fbe294a11ef548f4d527d89"
+BOOST_VER=1.88.0
+EXPECTED_HASH="46d9d2c06637b219270877c9e16155cbd015b6dc84349af064c088e9b5b12f7b"
 MACOSX_VERSION_ARM=12.3
 MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
@@ -48,26 +48,22 @@ BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
 [[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
 [[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
 
-boost_arc()
-{
-    if [[ $1 == arm* ]]; then
-		echo "arm"
-	elif [[ $1 == x86* ]]; then
-		echo "x86"
-	else
-		echo "unknown"
-	fi
+# Function to determine architecture
+boost_arc() {
+    case $1 in
+        arm*) echo "arm" ;;
+        x86*) echo "x86" ;;
+        *) echo "unknown" ;;
+    esac
 }
 
-boost_abi()
-{
-    if [[ $1 == arm64 ]]; then
-		echo "aapcs"
-	elif [[ $1 == x86_64 ]]; then
-		echo "sysv"
-	else
-		echo "unknown"
-	fi
+# Function to determine ABI
+boost_abi() {
+    case $1 in
+        arm64) echo "aapcs" ;;
+        x86_64) echo "sysv" ;;
+        *) echo "unknown" ;;
+    esac
 }
 
 is_subset() {
@@ -84,26 +80,26 @@ is_subset() {
     echo "true"
 }
 
-# parse command line
+# Parse command line arguments
 for i in "$@"; do
   case $i in
     -l=*|--libs=*)
       LIBS_TO_BUILD="${i#*=}"
-      shift # past argument=value
+      shift
       ;;
     -p=*|--platforms=*)
       BUILD_PLATFORMS="${i#*=},"
-      shift # past argument=value
+      shift
       ;;
     --rebuild)
       REBUILD=true
       [[ -f "$BUILD_DIR/frameworks.built.platforms" ]] && rm "$BUILD_DIR/frameworks.built.platforms"
       [[ -f "$BUILD_DIR/frameworks.built.libs" ]] && rm "$BUILD_DIR/frameworks.built.libs"
-      shift # past argument with no value
+      shift
       ;;
     --rebuildicu)
       [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
-      shift # past argument with no value
+      shift
       ;;
     -*|--*)
       echo "Unknown option $i"
@@ -374,22 +370,22 @@ build_catalyst_libs()
 
 build_ios_libs()
 {
-    build_generic_libs ios arm64 "-isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION" $IOSSYSROOT "ios-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+    build_generic_libs ios arm64 "-fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION" $IOSSYSROOT "ios-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_xros_libs()
 {
-    build_generic_libs xros arm64 "-isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xros arm64 "-fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvos_libs()
 {
-    build_generic_libs tvos arm64 "-isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs tvos arm64 "-fembed-bitcode -isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_watchos_libs()
 {
-    build_generic_libs watchos arm64 "-isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs watchos arm64 "-fembed-bitcode -isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_sim_libs()

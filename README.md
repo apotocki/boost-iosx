@@ -1,8 +1,6 @@
-[<img src="https://api.gitsponsors.com/api/badge/img?id=325609371" height="50">](https://api.gitsponsors.com/api/badge/link?p=pgoEpiVSKg0538cYKVgIOxgKKmeFGEAhZKkOovc5a01rqJx44vBptpuac/yQXd7r5abbr2T3FwVMOH2fx8m6/ps0kdNQqgPSszlMZUc/AE2OrKAt+XzcR1anMOf32ycdE/w3PxfxZVs5AvFtpjQ9YA==)
-
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported versions: 1.87.0, 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
+Supported versions: 1.88.0, 1.87.0, 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
@@ -34,7 +32,7 @@ graph_parallel, mpi, python
 4. **Install Required SDKs**: To build for tvOS, watchOS, visionOS, and their simulators, make sure the corresponding SDKs are installed in the folder:
 ```
    /Applications/Xcode.app/Contents/Developer/Platforms
-```  
+```
 ## Building Notes
 
 1. **ICU Backend for `locale` and `regex` Libraries**:
