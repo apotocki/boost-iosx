@@ -48,6 +48,8 @@ BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
 [[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
 [[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
 
+REBUILD=false
+
 # Function to determine architecture
 boost_arc() {
     case $1 in
@@ -217,6 +219,8 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	            break
 	        else
 	        	echo "Wrong archive hash $FILE_HASH, expected $EXPECTED_HASH. Trying next link to reload the archive."
+                echo "File content: "
+                head -c 1024 $BOOST_ARCHIVE_FILE
 	        	rm $BOOST_ARCHIVE_FILE
 	        fi
 	    fi
@@ -245,7 +249,7 @@ fi
 if true; then
 #export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
 if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/build.success ]] || [[ $(is_subset $SCRIPT_DIR/Pods/icu4c-iosx/build.success "${BUILD_PLATFORMS_ARRAY[@]}") == "false" ]]; then
-    if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
+    if [[ ! -z "${ICU4C_RELEASE_LINK:-}" ]]; then
 		[[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
 		mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
 		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
@@ -323,7 +327,7 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
-[[ ! -z "${ICU_PATH}" ]] && B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
+[[ ! -z "${ICU_PATH:-}" ]] && B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
 
 for i in $LIBS_TO_BUILD; do :;
   B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS --with-$i"
@@ -344,15 +348,15 @@ if [[ $REBUILD == true ]] || [[ ! -f $1-$2-build.success ]] || [[ $(is_subset $1
     cat >> tools/build/src/user-config.jam <<EOF
 using darwin : $1 : clang++ -arch $2 $3
 : <striper> <root>$4
-: <architecture>$(boost_arc $2) $6
+: <architecture>$(boost_arc $2) ${6:-}
 ;
 EOF
-    if [[ ! -z "${ICU_PATH}" ]]; then
+    if [[ ! -z "${ICU_PATH:-}" ]]; then
         cp $ICU_PATH/frameworks/icudata.xcframework/$5/libicudata.a $ICU_PATH/lib/
         cp $ICU_PATH/frameworks/icui18n.xcframework/$5/libicui18n.a $ICU_PATH/lib/
         cp $ICU_PATH/frameworks/icuuc.xcframework/$5/libicuuc.a $ICU_PATH/lib/
     fi
-    ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) $7 $B2_BUILD_OPTIONS
+    ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) ${7:-} $B2_BUILD_OPTIONS
     rm -rf bin.v2
     printf "$LIBS_TO_BUILD_SORTED" > $1-$2-build.success
 fi
@@ -395,7 +399,7 @@ build_sim_libs()
 
 build_xrossim_libs()
 {
-    build_generic_libs xrossim $1 "$2 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xrossim $1 "-isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvossim_libs()
