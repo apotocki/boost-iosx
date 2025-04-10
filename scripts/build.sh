@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 ################## SETUP BEGIN
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 HOST_ARC=$( uname -m )
@@ -16,7 +16,7 @@ TVOS_SIM_VERSION=13.0
 WATCHOS_VERSION=11.0
 WATCHOS_SIM_VERSION=11.0
 ################## SETUP END
-LOCATIONS_FILE_URL="https://raw.githubusercontent.com/apotocki/boost-iosx/master/LOCATIONS"
+LOCATIONS_FILE_URL="https://github.com/apotocki/boost-iosx/raw/refs/heads/master/LOCATIONS"
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
@@ -48,26 +48,24 @@ BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
 [[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
 [[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
 
-boost_arc()
-{
-    if [[ $1 == arm* ]]; then
-		echo "arm"
-	elif [[ $1 == x86* ]]; then
-		echo "x86"
-	else
-		echo "unknown"
-	fi
+REBUILD=false
+
+# Function to determine architecture
+boost_arc() {
+    case $1 in
+        arm*) echo "arm" ;;
+        x86*) echo "x86" ;;
+        *) echo "unknown" ;;
+    esac
 }
 
-boost_abi()
-{
-    if [[ $1 == arm64 ]]; then
-		echo "aapcs"
-	elif [[ $1 == x86_64 ]]; then
-		echo "sysv"
-	else
-		echo "unknown"
-	fi
+# Function to determine ABI
+boost_abi() {
+    case $1 in
+        arm64) echo "aapcs" ;;
+        x86_64) echo "sysv" ;;
+        *) echo "unknown" ;;
+    esac
 }
 
 is_subset() {
@@ -84,26 +82,26 @@ is_subset() {
     echo "true"
 }
 
-# parse command line
+# Parse command line arguments
 for i in "$@"; do
   case $i in
     -l=*|--libs=*)
       LIBS_TO_BUILD="${i#*=}"
-      shift # past argument=value
+      shift
       ;;
     -p=*|--platforms=*)
       BUILD_PLATFORMS="${i#*=},"
-      shift # past argument=value
+      shift
       ;;
     --rebuild)
       REBUILD=true
       [[ -f "$BUILD_DIR/frameworks.built.platforms" ]] && rm "$BUILD_DIR/frameworks.built.platforms"
       [[ -f "$BUILD_DIR/frameworks.built.libs" ]] && rm "$BUILD_DIR/frameworks.built.libs"
-      shift # past argument with no value
+      shift
       ;;
     --rebuildicu)
       [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
-      shift # past argument with no value
+      shift
       ;;
     -*|--*)
       echo "Unknown option $i"
@@ -201,7 +199,7 @@ fi
 
 if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	TEMP_LOCATIONS_FILE=$(mktemp)
-	curl -s -o "$TEMP_LOCATIONS_FILE" "$LOCATIONS_FILE_URL"
+	curl -s -o "$TEMP_LOCATIONS_FILE" -L "$LOCATIONS_FILE_URL"
 	if [[ $? -ne 0 ]]; then
 	    echo "Failed to download the LOCATIONS file."
 	    exit 1
@@ -209,7 +207,7 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	while IFS= read -r linktemplate; do
 		linktemplate=${linktemplate/DOTVERSION/"$BOOST_VER"}
 		link=${linktemplate/FILENAME/"$BOOST_ARCHIVE_FILE"}
-		echo "downloading from $link ..."
+		echo "downloading from \"$link\" ..."
 
 	    curl -o "$BOOST_ARCHIVE_FILE" -L "$link"
 
@@ -221,6 +219,9 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	            break
 	        else
 	        	echo "Wrong archive hash $FILE_HASH, expected $EXPECTED_HASH. Trying next link to reload the archive."
+                echo "File content: "
+                head -c 1024 $BOOST_ARCHIVE_FILE
+                echo ""
 	        	rm $BOOST_ARCHIVE_FILE
 	        fi
 	    fi
@@ -249,7 +250,7 @@ fi
 if true; then
 #export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
 if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/build.success ]] || [[ $(is_subset $SCRIPT_DIR/Pods/icu4c-iosx/build.success "${BUILD_PLATFORMS_ARRAY[@]}") == "false" ]]; then
-    if [[ ! -z "${ICU4C_RELEASE_LINK}" ]]; then
+    if [[ ! -z "${ICU4C_RELEASE_LINK:-}" ]]; then
 		[[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
 		mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
 		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
@@ -327,7 +328,7 @@ patch tools/build/src/tools/features/instruction-set-feature.jam $SCRIPT_DIR/ins
 
 B2_BUILD_OPTIONS="-j$THREAD_COUNT address-model=64 release link=static runtime-link=shared define=BOOST_SPIRIT_THREADSAFE cxxflags=\"-std=c++20\""
 
-[[ ! -z "${ICU_PATH}" ]] && B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
+[[ ! -z "${ICU_PATH:-}" ]] && B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS -sICU_PATH=\"$ICU_PATH\""
 
 for i in $LIBS_TO_BUILD; do :;
   B2_BUILD_OPTIONS="$B2_BUILD_OPTIONS --with-$i"
@@ -348,15 +349,15 @@ if [[ $REBUILD == true ]] || [[ ! -f $1-$2-build.success ]] || [[ $(is_subset $1
     cat >> tools/build/src/user-config.jam <<EOF
 using darwin : $1 : clang++ -arch $2 $3
 : <striper> <root>$4
-: <architecture>$(boost_arc $2) $6
+: <architecture>$(boost_arc $2) ${6:-}
 ;
 EOF
-    if [[ ! -z "${ICU_PATH}" ]]; then
+    if [[ ! -z "${ICU_PATH:-}" ]]; then
         cp $ICU_PATH/frameworks/icudata.xcframework/$5/libicudata.a $ICU_PATH/lib/
         cp $ICU_PATH/frameworks/icui18n.xcframework/$5/libicui18n.a $ICU_PATH/lib/
         cp $ICU_PATH/frameworks/icuuc.xcframework/$5/libicuuc.a $ICU_PATH/lib/
     fi
-    ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) $7 $B2_BUILD_OPTIONS
+    ./b2 -j8 --stagedir=stage/$1-$2 toolset=darwin-$1 architecture=$(boost_arc $2) abi=$(boost_abi $2) ${7:-} $B2_BUILD_OPTIONS
     rm -rf bin.v2
     printf "$LIBS_TO_BUILD_SORTED" > $1-$2-build.success
 fi
@@ -374,22 +375,22 @@ build_catalyst_libs()
 
 build_ios_libs()
 {
-    build_generic_libs ios arm64 "-isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION" $IOSSYSROOT "ios-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+    build_generic_libs ios arm64 "-fembed-bitcode -isysroot $IOSSYSROOT/SDKs/iPhoneOS.sdk -mios-version-min=$IOS_VERSION" $IOSSYSROOT "ios-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_xros_libs()
 {
-    build_generic_libs xros arm64 "-isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xros arm64 "-fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvos_libs()
 {
-    build_generic_libs tvos arm64 "-isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs tvos arm64 "-fembed-bitcode -isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_watchos_libs()
 {
-    build_generic_libs watchos arm64 "-isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs watchos arm64 "-fembed-bitcode -isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_sim_libs()
@@ -399,7 +400,7 @@ build_sim_libs()
 
 build_xrossim_libs()
 {
-    build_generic_libs xrossim $1 "$2 -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xrossim $1 "-isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvossim_libs()
