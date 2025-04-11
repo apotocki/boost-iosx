@@ -4,25 +4,48 @@ Supported version: 1.85.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
-Since the Boost distribution URLs are often broken and change, the script tries to download it from the links specified in the LOCATIONS file in the master branch. Only after the SHA256 hash of the downloaded archive is verified, the libraries are unpacked and compiled.
+Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links specified in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
 
-## Building libraries
+## Built Libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
 
-## Not building libraries
+## Excluded Libraries
 graph_parallel, mpi, python
 
 ## Prerequisites
-  1) Xcode must be installed because xcodebuild is used to create xcframeworks
-  2) ```xcode-select -p``` must point to Xcode app developer directory (by default e.g. /Applications/Xcode.app/Contents/Developer). If it points to CommandLineTools directory you should execute:
-  ```sudo xcode-select --reset``` or ```sudo xcode-select -s /Applications/Xcode.app/Contents/Developer```
-  3) You should not have your own user-config.jam file in your home directory!
-  4) Building for tvOS, watchOS, visionOS and their simulators requires the appropriate SDKs to be installed in the folder /Applications/Xcode.app/Contents/Developer/Platforms
 
-## Building notes
-1) The 'locale' and 'regex' libraries are built using the ICU backend. There are two ways to get it. The first (default) is when the ICU libraries are automatically built before Boost is built using the build script from https://github.com/apotocki/icu4c-iosx . The second is by specifying the ICU4C_RELEASE_LINK environment variable where prebuit binaries can be downloaded from.
-2) The 'test' library is built for iOS and visionOS with the BOOST_TEST_NO_MAIN flag.
-3) The 'test' library is built for watchOS and tvOS with the BOOST_TEST_NO_MAIN and BOOST_TEST_DISABLE_ALT_STACK flags.
+1. **Install Xcode**: Ensure Xcode is installed, as `xcodebuild` is required to create `xcframeworks`.
+
+2. **Verify Xcode Developer Directory**:
+   - The `xcode-select -p` command must point to the Xcode app's developer directory (e.g., `/Applications/Xcode.app/Contents/Developer`).
+   - If it points to the CommandLineTools directory, reset it using one of the following commands:
+     ```bash
+     sudo xcode-select --reset
+     ```
+     or
+     ```bash
+     sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+     ```
+
+3. **Remove User-Specific Configurations**: Ensure you do not have a `user-config.jam` file in your home directory, as it may interfere with the build process.
+
+4. **Install Required SDKs**: To build for tvOS, watchOS, visionOS, and their simulators, make sure the corresponding SDKs are installed in the folder:
+```
+   /Applications/Xcode.app/Contents/Developer/Platforms
+```
+## Building Notes
+
+1. **ICU Backend for `locale` and `regex` Libraries**:
+   - These libraries are built using the ICU backend. There are two ways to obtain the ICU libraries:
+     1. **Default Method**: The ICU libraries are automatically built before Boost using the build script available at:
+        [https://github.com/apotocki/icu4c-iosx](https://github.com/apotocki/icu4c-iosx).
+     2. **Prebuilt Binaries**: Specify the `ICU4C_RELEASE_LINK` environment variable to download prebuilt binaries.
+
+2. **`test` Library for iOS and visionOS**:
+   - The `test` library is built with the `BOOST_TEST_NO_MAIN` flag.
+
+3. **`test` Library for watchOS and tvOS**:
+   - The `test` library is built with the `BOOST_TEST_NO_MAIN` and `BOOST_TEST_DISABLE_ALT_STACK` flags.
 
 # Build Manually
 ```
@@ -34,7 +57,7 @@ graph_parallel, mpi, python
     scripts/build.sh
     
     # However, if you wish, you can skip building the ICU libraries during the boost build and use pre-built binaries from my ICU repository:
-    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4 scripts/build.sh
+    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/77.1.0 scripts/build.sh
     
     # have fun, the result artifacts will be located in 'frameworks' folder.
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
@@ -48,7 +71,7 @@ scripts/build.sh -p=ios,iossim-x86_64
 ```
 Here is a list of all possible values for '-p' option:
 ```
-macosx,macosx-arm64,macosx-x86_64,macosx-both,ios,iossim,iossim-arm64,iossim-x86_64,iossim-both,catalyst,catalyst-arm64,catalyst-x86_64,catalyst-both,xros,xrossim,xrossim-arm64,xrossim-x86_64,xrossim-both,tvos,tvossim,tvossim-both,tvossim-arm64,tvossim-x86_64,watchos,watchossim,watchossim-both,watchossim-arm64,watchossim-x86_64
+macosx,macosx-arm64,macosx-x86_64,macosx-both,ios,iossim,iossim-arm64,iossim-x86_64,iossim-both,catalyst,catalyst-arm64,catalyst-x86_64,catalyst-both,xros,xrossim,xrossim-arm64,xrossim-x86_64,xrossim-both,tvos,tvossim,tvossim-arm64,tvossim-x86_64,tvossim-both,watchos,watchossim,watchossim-arm64,watchossim-x86_64,watchossim-both
 ```
 Suffix '-both' means that xcframeworks will be built for both arm64 and x86_64 architectures.
 The platform names for macosx and simulators without an architecture suffix (e.g. macosx, iossim, tvossim) mean that xcframeworks are only built for the current host architecture.
@@ -77,7 +100,7 @@ Add the following lines into your project's Podfile:
     use_frameworks!
     pod 'boost-iosx', '~> 1.85.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.85.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.85.0.2'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
