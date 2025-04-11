@@ -16,7 +16,7 @@ TVOS_SIM_VERSION=13.0
 WATCHOS_VERSION=11.0
 WATCHOS_SIM_VERSION=11.0
 ################## SETUP END
-LOCATIONS_FILE_URL="https://raw.githubusercontent.com/apotocki/boost-iosx/master/LOCATIONS"
+LOCATIONS_FILE_URL="https://github.com/apotocki/boost-iosx/raw/refs/heads/master/LOCATIONS"
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 IOSSIMSYSROOT=$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 MACSYSROOT=$XCODE_ROOT/Platforms/MacOSX.platform/Developer
@@ -199,7 +199,7 @@ fi
 
 if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	TEMP_LOCATIONS_FILE=$(mktemp)
-	curl -s -o "$TEMP_LOCATIONS_FILE" "$LOCATIONS_FILE_URL"
+	curl -s -o "$TEMP_LOCATIONS_FILE" -L "$LOCATIONS_FILE_URL"
 	if [[ $? -ne 0 ]]; then
 	    echo "Failed to download the LOCATIONS file."
 	    exit 1
@@ -207,7 +207,7 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	while IFS= read -r linktemplate; do
 		linktemplate=${linktemplate/DOTVERSION/"$BOOST_VER"}
 		link=${linktemplate/FILENAME/"$BOOST_ARCHIVE_FILE"}
-		echo "downloading from $link ..."
+		echo "downloading from \"$link\" ..."
 
 	    curl -o "$BOOST_ARCHIVE_FILE" -L "$link"
 
@@ -221,6 +221,7 @@ if [[ ! -f $BOOST_ARCHIVE_FILE ]]; then
 	        	echo "Wrong archive hash $FILE_HASH, expected $EXPECTED_HASH. Trying next link to reload the archive."
                 echo "File content: "
                 head -c 1024 $BOOST_ARCHIVE_FILE
+                echo ""
 	        	rm $BOOST_ARCHIVE_FILE
 	        fi
 	    fi

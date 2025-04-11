@@ -57,7 +57,7 @@ graph_parallel, mpi, python
     scripts/build.sh
     
     # However, if you wish, you can skip building the ICU libraries during the boost build and use pre-built binaries from my ICU repository:
-    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4 scripts/build.sh
+    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/77.1.0 scripts/build.sh
     
     # have fun, the result artifacts will be located in 'frameworks' folder.
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
@@ -100,7 +100,7 @@ Add the following lines into your project's Podfile:
     use_frameworks!
     pod 'boost-iosx', '~> 1.88.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.88.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.88.0.2'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
