@@ -27,7 +27,7 @@ TVOSSIMSYSROOT=$XCODE_ROOT/Platforms/AppleTVSimulator.platform/Developer
 WATCHOSSYSROOT=$XCODE_ROOT/Platforms/WatchOS.platform/Developer
 WATCHOSSIMSYSROOT=$XCODE_ROOT/Platforms/WatchSimulator.platform/Developer
 
-LIBS_TO_BUILD_ALL="atomic,chrono,container,context,contract,coroutine,date_time,exception,fiber,filesystem,graph,iostreams,json,locale,log,math,nowide,program_options,random,regex,serialization,stacktrace,system,test,thread,timer,type_erasure,wave,url,cobalt,charconv"
+LIBS_TO_BUILD_ALL="atomic,chrono,container,context,contract,coroutine,date_time,exception,fiber,filesystem,graph,iostreams,json,locale,log,math,nowide,program_options,random,regex,serialization,stacktrace,test,thread,timer,type_erasure,wave,url,cobalt,charconv"
 
 BUILD_PLATFORMS_ALL="macosx,macosx-arm64,macosx-x86_64,macosx-both,ios,iossim,iossim-arm64,iossim-x86_64,iossim-both,catalyst,catalyst-arm64,catalyst-x86_64,catalyst-both,xros,xrossim,xrossim-arm64,xrossim-x86_64,xrossim-both,tvos,tvossim,tvossim-both,tvossim-arm64,tvossim-x86_64,watchos,watchossim,watchossim-both,watchossim-arm64,watchossim-x86_64"
 
