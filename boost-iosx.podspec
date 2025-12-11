@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.89.0.1"
+    s.version      = "1.90.0.0"
     s.summary      = "Boost C++ libraries for macOS, iOS, watchOS, tvOS, and visionOS, including builds for Mac Catalyst, iOS Simulator, watchOS Simulator, tvOS Simulator, and visionOS Simulator."
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"
