@@ -1,6 +1,6 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported version: 1.89.0 (use the appropriate tag to select the version)
+Supported version: 1.90.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
@@ -50,7 +50,7 @@ graph_parallel, mpi, python
 # Build Manually
 ```
     # clone the repo
-    git clone -b 1.89.0 https://github.com/apotocki/boost-iosx
+    git clone -b 1.90.0 https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
@@ -98,14 +98,14 @@ scripts/build.sh -p=ios,iossim-x86_64 --rebuild
 Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '~> 1.89.0'
+    pod 'boost-iosx', '~> 1.90.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.89.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.90.0.0'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '~> 1.89.0'
-    pod 'boost-iosx/program_options', '~> 1.89.0'
+    pod 'boost-iosx/log', '~> 1.90.0'
+    pod 'boost-iosx/program_options', '~> 1.90.0'
     # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install new dependencies:
