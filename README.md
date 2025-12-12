@@ -1,10 +1,13 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported versions: 1.90.0, 1.89.0, 1.88.0, 1.87.0, 1.86.0, 1.85.0, 1.84.0, 1.83.0, 1.82.0, 1.81.0, 1.80.0, 1.79.0, 1.78.0, 1.77.0, 1.76.0, 1.75.0 (use the appropriate tag or branch to choose a version)
+Supported versions: [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
 
-This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
-Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links specified in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
+Use the appropriate tag or branch to select a version.
+
+This repository provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
+
+Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links listed in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
 
 ## Built Libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
@@ -94,7 +97,7 @@ scripts/build.sh -p=ios,iossim-x86_64 --rebuild
 
 ```
 
-# Build Using Cocoapods.
+# Build Using CocoaPods.
 Add the following lines into your project's Podfile:
 ```
     use_frameworks!
@@ -109,7 +112,7 @@ If you want to use specific boost libraries, specify them as in the following ex
     pod 'boost-iosx/program_options'
     # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
-Then install new dependencies:
+Then install the dependencies:
 ```
    pod install --verbose
 ```    
