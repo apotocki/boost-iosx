@@ -1,10 +1,10 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported version: 1.90.0 (use the appropriate tag to select the version)
+Supported version: 1.90.0
 
-This repo provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
+This repository provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
-Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links specified in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
+Since Boost distribution URLs are often unreliable and subject to change, the script attempts to download Boost from the links listed in the `LOCATIONS` file on the master branch. Only after verifying the SHA256 hash of the downloaded archive are the libraries unpacked and compiled.
 
 ## Built Libraries
 atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), container, context, contract, coroutine, date_time, exception, fiber, filesystem, graph, iostreams, json, locale, log, math, nowide, program_options, random, regex, serialization, stacktrace, system, test, thread, timer, type_erasure, url, wave
@@ -94,13 +94,13 @@ scripts/build.sh -p=ios,iossim-x86_64 --rebuild
 
 ```
 
-# Build Using Cocoapods.
+# Build Using CocoaPods.
 Add the following lines into your project's Podfile:
 ```
     use_frameworks!
     pod 'boost-iosx', '~> 1.90.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.90.0.0'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.90.0.1'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
@@ -108,7 +108,7 @@ If you want to use specific boost libraries, specify them as in the following ex
     pod 'boost-iosx/program_options', '~> 1.90.0'
     # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
-Then install new dependencies:
+Then install the dependencies:
 ```
    pod install --verbose
 ```
