@@ -1,6 +1,6 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported versions: [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
+Supported versions: [1.91.0](https://github.com/apotocki/boost-iosx/tree/1.91.0), [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
 
 
 Use the appropriate tag or branch to select a version.
@@ -120,10 +120,24 @@ Then install the dependencies:
 ## As an advertisement...
 The Boost libraries built by this project are used in my iOS application on the App Store:
 
-[<table align="center" border=0 cellspacing=0 cellpadding=0><tr><td><img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70"/></td><td><a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br>HEX File Viewer & Editor</td><tr></table>]()
+<table align="center" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+      <a href="https://apps.apple.com/us/app/potohex/id1620963302">
+        <img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70" />
+      </a>
+    </td>
+    <td>
+      <a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br />
+      HEX File Viewer &amp; Editor
+    </td>
+  </tr>
+</table>
 
-This application is designed to view and edit files at the byte or character level; calculate different hashes, encode/decode, and compress/decompress desired byte regions.
-  
-You can support my open-source development by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
+PotoHEX is designed for viewing and editing files at the byte or character level, calculating hashes, encoding/decoding data, and compressing/decompressing selected byte ranges.
+
+If you find this project useful, you can support my open-source work by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
+
+---
 
 Feedback is welcome!
