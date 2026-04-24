@@ -1,6 +1,6 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported version: 1.90.0
+Supported version: 1.91.0
 
 This repository provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
@@ -50,7 +50,7 @@ graph_parallel, mpi, python
 # Build Manually
 ```
     # clone the repo
-    git clone -b 1.90.0 https://github.com/apotocki/boost-iosx
+    git clone -b 1.91.0 https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
@@ -98,14 +98,14 @@ scripts/build.sh -p=ios,iossim-x86_64 --rebuild
 Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '~> 1.90.0'
+    pod 'boost-iosx', '~> 1.91.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.90.0.1'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.91.0.0'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '~> 1.90.0'
-    pod 'boost-iosx/program_options', '~> 1.90.0'
+    pod 'boost-iosx/log', '~> 1.91.0'
+    pod 'boost-iosx/program_options', '~> 1.91.0'
     # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install the dependencies:
@@ -116,10 +116,24 @@ Then install the dependencies:
 ## As an advertisement...
 The Boost libraries built by this project are used in my iOS application on the App Store:
 
-[<table align="center" border=0 cellspacing=0 cellpadding=0><tr><td><img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70"/></td><td><a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br>HEX File Viewer & Editor</td><tr></table>]()
+<table align="center" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>
+      <a href="https://apps.apple.com/us/app/potohex/id1620963302">
+        <img src="https://is4-ssl.mzstatic.com/image/thumb/Purple112/v4/78/d6/f8/78d6f802-78f6-267a-8018-751111f52c10/AppIcon-0-1x_U007emarketing-0-10-0-85-220.png/460x0w.webp" width="70" />
+      </a>
+    </td>
+    <td>
+      <a href="https://apps.apple.com/us/app/potohex/id1620963302">PotoHEX</a><br />
+      HEX File Viewer &amp; Editor
+    </td>
+  </tr>
+</table>
 
-This application is designed to view and edit files at the byte or character level; calculate different hashes, encode/decode, and compress/decompress desired byte regions.
-  
-You can support my open-source development by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
+PotoHEX is designed for viewing and editing files at the byte or character level, calculating hashes, encoding/decoding data, and compressing/decompressing selected byte ranges.
+
+If you find this project useful, you can support my open-source work by trying the [App](https://apps.apple.com/us/app/potohex/id1620963302).
+
+---
 
 Feedback is welcome!
