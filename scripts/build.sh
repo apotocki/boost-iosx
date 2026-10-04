@@ -4,8 +4,8 @@ set -euo pipefail
 THREAD_COUNT=$(sysctl hw.ncpu | awk '{print $2}')
 HOST_ARC=$( uname -m )
 XCODE_ROOT=$( xcode-select -print-path )
-BOOST_VER=1.91.0
-EXPECTED_HASH="de5e6b0e4913395c6bdfa90537febd9028ea4c0735d2cdb0cd9b45d5f51264f5"
+BOOST_VER=1.92.0
+EXPECTED_HASH="5c1d40cb8e19adbf740a4ec2da35b3e58f3f5804b1dce44deb53df72193cbc6c"
 MACOSX_VERSION_ARM=12.3
 MACOSX_VERSION_X86_64=10.13
 IOS_VERSION=13.4
@@ -100,7 +100,7 @@ for i in "$@"; do
       shift
       ;;
     --rebuildicu)
-      [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
+      rm -rf $SCRIPT_DIR/Pods/icu4c-iosx*
       shift
       ;;
     -*|--*)
@@ -247,58 +247,41 @@ if [[ ! -f boost/b2 ]]; then
 fi
 
 ############### ICU
-if true; then
-#export ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/76.1.4
-if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/build.success ]] || [[ $(is_subset $SCRIPT_DIR/Pods/icu4c-iosx/build.success "${BUILD_PLATFORMS_ARRAY[@]}") == "false" ]]; then
-    if [[ ! -z "${ICU4C_RELEASE_LINK:-}" ]]; then
-		[[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
-		mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product
-		pushd $SCRIPT_DIR/Pods/icu4c-iosx/product
-        curl -L ${ICU4C_RELEASE_LINK}/include.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/include.zip
-		curl -L ${ICU4C_RELEASE_LINK}/icudata.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icudata.xcframework.zip
-		curl -L ${ICU4C_RELEASE_LINK}/icui18n.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icui18n.xcframework.zip
-        #curl -L ${ICU4C_RELEASE_LINK}/icuio.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuio.xcframework.zip
-        curl -L ${ICU4C_RELEASE_LINK}/icuuc.xcframework.zip -o $SCRIPT_DIR/Pods/icu4c-iosx/product/icuuc.xcframework.zip
-		unzip -q include.zip
-		unzip -q icudata.xcframework.zip
-		unzip -q icui18n.xcframework.zip
-        #unzip -q icuio.xcframework.zip
-        unzip -q icuuc.xcframework.zip
-		mkdir frameworks
-		mv icudata.xcframework frameworks/
-		mv icui18n.xcframework frameworks/
-        #mv icuio.xcframework frameworks/
-        mv icuuc.xcframework frameworks/
-        popd
-        printf "${BUILD_PLATFORMS_ALL//,/ }" > build.success
+# ICU for the locale and regex backends comes from icu4c-iosx at the pinned tag:
+#   default             build it from source with the icu4c-iosx build script
+#   ICU4C_DOWNLOAD=1    download the prebuilt XCFrameworks of that icu4c-iosx GitHub release; used by
+#                       CI and publication (ICU4C_RELEASE_LINK, if set, downloads from that URL instead)
+ICU4C_IOSX_VERSION=78.3.3
+ICU_ROOT=$SCRIPT_DIR/Pods/icu4c-iosx-$ICU4C_IOSX_VERSION
+[[ "${ICU4C_DOWNLOAD:-}" == "1" ]] && ICU4C_RELEASE_LINK=${ICU4C_RELEASE_LINK:-https://github.com/apotocki/icu4c-iosx/releases/download/$ICU4C_IOSX_VERSION}
+if [[ ! -f $ICU_ROOT/build.success ]] || [[ $(is_subset $ICU_ROOT/build.success "${BUILD_PLATFORMS_ARRAY[@]}") == "false" ]]; then
+    if [[ -n "${ICU4C_RELEASE_LINK:-}" ]]; then
+        echo downloading ICU from $ICU4C_RELEASE_LINK ...
+        rm -rf $ICU_ROOT $ICU_ROOT.download
+        mkdir -p $ICU_ROOT.download/product/frameworks
+        for archive in include icudata.xcframework icui18n.xcframework icuuc.xcframework; do
+            curl -fL $ICU4C_RELEASE_LINK/$archive.zip -o $ICU_ROOT.download/product/$archive.zip
+            unzip -q $ICU_ROOT.download/product/$archive.zip -d $ICU_ROOT.download/product
+            rm $ICU_ROOT.download/product/$archive.zip
+        done
+        mv $ICU_ROOT.download/product/*.xcframework $ICU_ROOT.download/product/frameworks/
+        mv $ICU_ROOT.download $ICU_ROOT
+        printf "${BUILD_PLATFORMS_ALL//,/ }" > $ICU_ROOT/build.success
     else
-        if [[ ! -f $SCRIPT_DIR/Pods/icu4c-iosx/everbuilt.success ]]; then
-            [[ -d $SCRIPT_DIR/Pods/icu4c-iosx ]] && rm -rf $SCRIPT_DIR/Pods/icu4c-iosx
-            [[ ! -d $SCRIPT_DIR/Pods ]] && mkdir $SCRIPT_DIR/Pods
-            pushd $SCRIPT_DIR/Pods
-            git clone https://github.com/apotocki/icu4c-iosx
-        else
-            pushd $SCRIPT_DIR/Pods/icu4c-iosx
-            git pull
+        if [[ ! -f $ICU_ROOT/scripts/build.sh ]]; then
+            echo downloading icu4c-iosx $ICU4C_IOSX_VERSION build scripts ...
+            rm -rf $ICU_ROOT $ICU_ROOT.download
+            mkdir -p $SCRIPT_DIR/Pods
+            git clone --depth 1 -b $ICU4C_IOSX_VERSION https://github.com/apotocki/icu4c-iosx.git $ICU_ROOT.download
+            mv $ICU_ROOT.download $ICU_ROOT
         fi
-        popd
-        
-        pushd $SCRIPT_DIR/Pods/icu4c-iosx
-        scripts/build.sh -p=$BUILD_PLATFORMS
-        touch everbuilt.success
-        printf "${BUILD_PLATFORMS//,/ }" > build.success
-        popd
-        
-        #pushd $SCRIPT_DIR
-        #pod repo update
-        #pod install --verbose
-        ##pod update --verbose
-        #popd
+        echo building ICU from source: icu4c-iosx $ICU4C_IOSX_VERSION ...
+        (cd $ICU_ROOT && bash scripts/build.sh -p=$BUILD_PLATFORMS)
+        printf "${BUILD_PLATFORMS//,/ }" > $ICU_ROOT/build.success
     fi
-    mkdir -p $SCRIPT_DIR/Pods/icu4c-iosx/product/lib
 fi
-ICU_PATH=$SCRIPT_DIR/Pods/icu4c-iosx/product
-fi
+mkdir -p $ICU_ROOT/product/lib
+ICU_PATH=$ICU_ROOT/product
 ############### ICU
 
 pushd boost

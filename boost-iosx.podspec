@@ -1,14 +1,14 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.91.0.0"
+    s.version      = "1.92.0.0"
     s.summary      = "Boost C++ libraries for macOS, iOS, watchOS, tvOS, and visionOS, including builds for Mac Catalyst, iOS Simulator, watchOS Simulator, tvOS Simulator, and visionOS Simulator."
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"
     s.author       = { "Alexander Pototskiy" => "alex.a.potocki@gmail.com" }
     s.social_media_url = "https://www.linkedin.com/in/alexander-pototskiy"
-    s.ios.deployment_target = "13.4"
-    s.osx.deployment_target = "11.0"
-    s.tvos.deployment_target = "13.0"
+    s.ios.deployment_target = "15.0"
+    s.osx.deployment_target = "12.0"
+    s.tvos.deployment_target = "15.0"
     s.watchos.deployment_target = "11.0"
     s.visionos.deployment_target = "1.0"
     s.ios.pod_target_xcconfig = { 'ONLY_ACTIVE_ARCH' => 'YES' }
@@ -32,7 +32,7 @@ Pod::Spec.new do |s|
 
     s.subspec 'all' do |ss|
         ss.source_files = "frameworks/Headers/**/*.{h,hpp,ipp}"
-        ss.vendored_frameworks = "frameworks/boost_atomic.xcframework", "frameworks/boost_charconv.xcframework", "frameworks/boost_chrono.xcframework", "frameworks/boost_cobalt.xcframework", "frameworks/boost_container.xcframework", "frameworks/boost_context.xcframework", "frameworks/boost_contract.xcframework", "frameworks/boost_coroutine.xcframework", "frameworks/boost_date_time.xcframework", "frameworks/boost_exception.xcframework", "frameworks/boost_fiber.xcframework", "frameworks/boost_filesystem.xcframework", "frameworks/boost_graph.xcframework", "frameworks/boost_iostreams.xcframework", "frameworks/boost_json.xcframework", "frameworks/boost_locale.xcframework", "frameworks/boost_log.xcframework", "frameworks/boost_log_setup.xcframework", "frameworks/boost_nowide.xcframework", "frameworks/boost_program_options.xcframework", "frameworks/boost_random.xcframework", "frameworks/boost_regex.xcframework", "frameworks/boost_serialization.xcframework", "frameworks/boost_stacktrace_basic.xcframework", "frameworks/boost_prg_exec_monitor.xcframework", "frameworks/boost_test_exec_monitor.xcframework", "frameworks/boost_unit_test_framework.xcframework", "frameworks/boost_thread.xcframework", "frameworks/boost_timer.xcframework", "frameworks/boost_type_erasure.xcframework", "frameworks/boost_system.xcframework", "frameworks/boost_url.xcframework", "frameworks/boost_wave.xcframework"
+        ss.vendored_frameworks = "frameworks/boost_atomic.xcframework", "frameworks/boost_charconv.xcframework", "frameworks/boost_chrono.xcframework", "frameworks/boost_cobalt.xcframework", "frameworks/boost_container.xcframework", "frameworks/boost_context.xcframework", "frameworks/boost_contract.xcframework", "frameworks/boost_coroutine.xcframework", "frameworks/boost_date_time.xcframework", "frameworks/boost_exception.xcframework", "frameworks/boost_fiber.xcframework", "frameworks/boost_filesystem.xcframework", "frameworks/boost_graph.xcframework", "frameworks/boost_iostreams.xcframework", "frameworks/boost_json.xcframework", "frameworks/boost_locale.xcframework", "frameworks/boost_log.xcframework", "frameworks/boost_log_setup.xcframework", "frameworks/boost_nowide.xcframework", "frameworks/boost_program_options.xcframework", "frameworks/boost_random.xcframework", "frameworks/boost_regex.xcframework", "frameworks/boost_serialization.xcframework", "frameworks/boost_stacktrace_basic.xcframework", "frameworks/boost_prg_exec_monitor.xcframework", "frameworks/boost_test_exec_monitor.xcframework", "frameworks/boost_unit_test_framework.xcframework", "frameworks/boost_thread.xcframework", "frameworks/boost_timer.xcframework", "frameworks/boost_type_erasure.xcframework", "frameworks/boost_url.xcframework", "frameworks/boost_wave.xcframework"
     end
 
     s.subspec 'atomic' do |ss|

@@ -1,6 +1,6 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported versions: [1.91.0](https://github.com/apotocki/boost-iosx/tree/1.91.0), [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
+Supported versions: [1.92.0](https://github.com/apotocki/boost-iosx/tree/1.92.0), [1.91.0](https://github.com/apotocki/boost-iosx/tree/1.91.0), [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
 
 
 Use the appropriate tag or branch to select a version.
@@ -39,10 +39,9 @@ graph_parallel, mpi, python
 ## Building Notes
 
 1. **ICU Backend for `locale` and `regex` Libraries**:
-   - These libraries are built using the ICU backend. There are two ways to obtain the ICU libraries:
-     1. **Default Method**: The ICU libraries are automatically built before Boost using the build script available at:
-        [https://github.com/apotocki/icu4c-iosx](https://github.com/apotocki/icu4c-iosx).
-     2. **Prebuilt Binaries**: Specify the `ICU4C_RELEASE_LINK` environment variable to download prebuilt binaries.
+   - These libraries are built using the ICU backend, taken from [icu4c-iosx](https://github.com/apotocki/icu4c-iosx) 78.3.3 (`ICU4C_IOSX_VERSION` in `scripts/build.sh`). There are two ways to obtain the ICU libraries:
+     1. **Default Method**: ICU is built from source before Boost with the icu4c-iosx build scripts of that version; no prebuilt binaries are downloaded.
+     2. **Prebuilt Binaries**: Only if you opt in, set `ICU4C_DOWNLOAD=1` to download the prebuilt XCFrameworks of that icu4c-iosx GitHub release (or `ICU4C_RELEASE_LINK=<release download URL>` for another release). The GitHub Actions workflow of this repository and the CocoaPods Trunk publication use this to save build time.
 
 2. **`test` Library for iOS and visionOS**:
    - The `test` library is built with the `BOOST_TEST_NO_MAIN` flag.
@@ -59,8 +58,8 @@ graph_parallel, mpi, python
     cd boost-iosx
     scripts/build.sh
 
-    # However, if you wish, you can skip building the ICU libraries during the boost build and use pre-built binaries from my ICU repository:
-    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/77.1.0 scripts/build.sh
+    # ICU is built from source first; to use the prebuilt ICU binaries of the pinned icu4c-iosx release instead:
+    # ICU4C_DOWNLOAD=1 scripts/build.sh
         
     # have fun, the result artifacts will be located in 'frameworks' folder.
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
