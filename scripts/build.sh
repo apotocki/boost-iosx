@@ -7,14 +7,16 @@ XCODE_ROOT=$( xcode-select -print-path )
 BOOST_VER=1.92.0
 EXPECTED_HASH="5c1d40cb8e19adbf740a4ec2da35b3e58f3f5804b1dce44deb53df72193cbc6c"
 MACOSX_VERSION_ARM=12.3
-MACOSX_VERSION_X86_64=10.13
-IOS_VERSION=13.4
-IOS_SIM_VERSION=13.4
-CATALYST_VERSION=13.4
-TVOS_VERSION=13.0
-TVOS_SIM_VERSION=13.0
+MACOSX_VERSION_X86_64=12.0
+IOS_VERSION=15.0
+IOS_SIM_VERSION=15.0
+CATALYST_VERSION=15.0
+TVOS_VERSION=15.0
+TVOS_SIM_VERSION=15.0
 WATCHOS_VERSION=11.0
 WATCHOS_SIM_VERSION=11.0
+XROS_VERSION=1.0
+XROS_SIM_VERSION=1.0
 ################## SETUP END
 LOCATIONS_FILE_URL="https://github.com/apotocki/boost-iosx/raw/refs/heads/master/LOCATIONS"
 IOSSYSROOT=$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
@@ -47,6 +49,9 @@ BUILD_PLATFORMS="macosx,ios,iossim,catalyst"
 [[ -d $TVOSSIMSYSROOT/SDKs/AppleTVSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,tvossim"
 [[ -d $WATCHOSSYSROOT/SDKs/WatchOS.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchos"
 [[ -d $WATCHOSSIMSYSROOT/SDKs/WatchSimulator.sdk ]] && BUILD_PLATFORMS="$BUILD_PLATFORMS,watchossim-both"
+# Replaces the default platform list (-p still wins). Trunk publication sets it to what
+# `pod trunk push` validation builds: macOS and the simulators for the host architecture.
+[[ -n "${BOOST_BUILD_PLATFORMS:-}" ]] && BUILD_PLATFORMS=$BOOST_BUILD_PLATFORMS
 
 REBUILD=false
 
@@ -363,17 +368,17 @@ build_ios_libs()
 
 build_xros_libs()
 {
-    build_generic_libs xros arm64 "-fembed-bitcode -isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xros arm64 "--target=arm64-apple-xros$XROS_VERSION -isysroot $XROSSYSROOT/SDKs/XROS.sdk" $XROSSYSROOT "xros-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvos_libs()
 {
-    build_generic_libs tvos arm64 "-fembed-bitcode -isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs tvos arm64 "-fembed-bitcode -isysroot $TVOSSYSROOT/SDKs/AppleTVOS.sdk -mtvos-version-min=$TVOS_VERSION" $TVOSSYSROOT "tvos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_watchos_libs()
 {
-    build_generic_libs watchos arm64 "-fembed-bitcode -isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
+    build_generic_libs watchos arm64 "-fembed-bitcode -isysroot $WATCHOSSYSROOT/SDKs/WatchOS.sdk -mwatchos-version-min=$WATCHOS_VERSION" $WATCHOSSYSROOT "watchos-arm64" "<target-os>iphone" "instruction-set=arm64 binary-format=mach-o target-os=iphone define=_LITTLE_ENDIAN define=BOOST_TEST_NO_MAIN define=BOOST_TEST_DISABLE_ALT_STACK"
 }
 
 build_sim_libs()
@@ -383,7 +388,7 @@ build_sim_libs()
 
 build_xrossim_libs()
 {
-    build_generic_libs xrossim $1 "-isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
+    build_generic_libs xrossim $1 "--target=$1-apple-xros$XROS_SIM_VERSION-simulator -isysroot $XROSSIMSYSROOT/SDKs/XRSimulator.sdk" $XROSSIMSYSROOT "xros-*-simulator" "<target-os>iphone" "target-os=iphone define=BOOST_TEST_NO_MAIN"
 }
 
 build_tvossim_libs()

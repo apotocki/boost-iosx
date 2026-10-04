@@ -65,7 +65,7 @@ graph_parallel, mpi, python
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
 ```    
 # Selecting Platforms and Architectures
-build.sh without arguments builds xcframeworks for iOS, macOS, Catalyst and also for watchOS, tvOS, visionOS if their SDKs are installed on the system. It also builds xcframeworks for their simulators with the architecture (arm64 or x86_64) depending on the current host.
+build.sh without arguments builds xcframeworks for iOS, macOS, Catalyst and also for watchOS, tvOS, visionOS if their SDKs are installed on the system. It also builds xcframeworks for their simulators with the architecture (arm64 or x86_64) depending on the current host. The `BOOST_BUILD_PLATFORMS` environment variable replaces this default list (e.g. `BOOST_BUILD_PLATFORMS=ios,iossim`); the `-p` option takes precedence over it.
 If you are interested in a specific set of platforms and architectures, you can specify them explicitly using the -p argument, for example:
 ```
 scripts/build.sh -p=ios,iossim-x86_64
