@@ -1,6 +1,6 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
-Supported version: 1.91.0
+Supported version: 1.92.0
 
 This repository provides a universal script for building static Boost C++ libraries for use in iOS, watchOS, tvOS, visionOS, and macOS & Catalyst applications.
 
@@ -36,10 +36,9 @@ graph_parallel, mpi, python
 ## Building Notes
 
 1. **ICU Backend for `locale` and `regex` Libraries**:
-   - These libraries are built using the ICU backend. There are two ways to obtain the ICU libraries:
-     1. **Default Method**: The ICU libraries are automatically built before Boost using the build script available at:
-        [https://github.com/apotocki/icu4c-iosx](https://github.com/apotocki/icu4c-iosx).
-     2. **Prebuilt Binaries**: Specify the `ICU4C_RELEASE_LINK` environment variable to download prebuilt binaries.
+   - These libraries are built using the ICU backend, taken from [icu4c-iosx](https://github.com/apotocki/icu4c-iosx) 78.3.3 (`ICU4C_IOSX_VERSION` in `scripts/build.sh`). There are two ways to obtain the ICU libraries:
+     1. **Default Method**: ICU is built from source before Boost with the icu4c-iosx build scripts of that version; no prebuilt binaries are downloaded.
+     2. **Prebuilt Binaries**: Only if you opt in, set `ICU4C_DOWNLOAD=1` to download the prebuilt XCFrameworks of that icu4c-iosx GitHub release (or `ICU4C_RELEASE_LINK=<release download URL>` for another release). The GitHub Actions workflow of this repository and the CocoaPods Trunk publication use this to save build time.
 
 2. **`test` Library for iOS and visionOS**:
    - The `test` library is built with the `BOOST_TEST_NO_MAIN` flag.
@@ -50,14 +49,14 @@ graph_parallel, mpi, python
 # Build Manually
 ```
     # clone the repo
-    git clone -b 1.91.0 https://github.com/apotocki/boost-iosx
+    git clone -b 1.92.0 https://github.com/apotocki/boost-iosx
     
     # build libraries
     cd boost-iosx
     scripts/build.sh
     
-    # However, if you wish, you can skip building the ICU libraries during the boost build and use pre-built binaries from my ICU repository:
-    # ICU4C_RELEASE_LINK=https://github.com/apotocki/icu4c-iosx/releases/download/77.1.0 scripts/build.sh
+    # ICU is built from source first; to use the prebuilt ICU binaries of the pinned icu4c-iosx release instead:
+    # ICU4C_DOWNLOAD=1 scripts/build.sh
     
     # have fun, the result artifacts will be located in 'frameworks' folder.
     # Then you can add desirable xcframeworks in your XCode project. The process is described, e.g., at https://www.simpleswiftguide.com/how-to-add-xcframework-to-xcode-project/
@@ -98,14 +97,14 @@ scripts/build.sh -p=ios,iossim-x86_64 --rebuild
 Add the following lines into your project's Podfile:
 ```
     use_frameworks!
-    pod 'boost-iosx', '~> 1.91.0'
+    pod 'boost-iosx', '~> 1.92.0'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.91.0.0'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.92.0.0'
 ```
 If you want to use specific boost libraries, specify them as in the following example for log and program_options libraries:
 ``` 
-    pod 'boost-iosx/log', '~> 1.91.0'
-    pod 'boost-iosx/program_options', '~> 1.91.0'
+    pod 'boost-iosx/log', '~> 1.92.0'
+    pod 'boost-iosx/program_options', '~> 1.92.0'
     # Note: Some libraries depend on other Boost libraries. In this case, you should explicitly add all their dependencies to your Podfile.
 ```
 Then install the dependencies:
