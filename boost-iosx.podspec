@@ -1,7 +1,8 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.92.0.1"
-    s.summary      = "Boost C++ libraries for macOS, iOS, watchOS, tvOS, and visionOS, including builds for Mac Catalyst, iOS Simulator, watchOS Simulator, tvOS Simulator, and visionOS Simulator."
+    s.version      = "1.92.0.2"
+    s.summary      = "Boost C++ libraries as XCFrameworks for macOS, iOS, watchOS, tvOS, and visionOS, including Mac Catalyst and simulators."
+    s.description  = "Boost C++ libraries as XCFrameworks for macOS, iOS, watchOS, tvOS, and visionOS, including Mac Catalyst and simulators. New versions are published to the apotocki/cocoapods-specs spec repo (https://github.com/apotocki/cocoapods-specs), because CocoaPods Trunk becomes read-only on December 2, 2026: add :source => 'https://github.com/apotocki/cocoapods-specs.git' to the pod in your Podfile."
     s.homepage     = "https://github.com/apotocki/boost-iosx"
     s.license      = "Boost Software License"
     s.author       = { "Alexander Pototskiy" => "alex.a.potocki@gmail.com" }
