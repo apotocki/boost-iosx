@@ -99,7 +99,7 @@ Add the following lines into your project's Podfile:
     use_frameworks!
     pod 'boost-iosx', '~> 1.92.0', :source => 'https://github.com/apotocki/cocoapods-specs.git'
     # or optionally more precisely e.g.:
-    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.92.0.2'
+    # pod 'boost-iosx', :git => 'https://github.com/apotocki/boost-iosx', :tag => '1.92.0.3'
 ```
 
 New versions are published to the [apotocki/cocoapods-specs](https://github.com/apotocki/cocoapods-specs) spec repo, because CocoaPods Trunk becomes read-only on December 2, 2026; `:source` makes CocoaPods take the pod from there.

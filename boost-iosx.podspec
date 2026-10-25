@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name         = "boost-iosx"
-    s.version      = "1.92.0.2"
+    s.version      = "1.92.0.3"
     s.summary      = "Boost C++ libraries as XCFrameworks for macOS, iOS, watchOS, tvOS, and visionOS, including Mac Catalyst and simulators."
     s.description  = "Boost C++ libraries as XCFrameworks for macOS, iOS, watchOS, tvOS, and visionOS, including Mac Catalyst and simulators. New versions are published to the apotocki/cocoapods-specs spec repo (https://github.com/apotocki/cocoapods-specs), because CocoaPods Trunk becomes read-only on December 2, 2026: add :source => 'https://github.com/apotocki/cocoapods-specs.git' to the pod in your Podfile."
     s.homepage     = "https://github.com/apotocki/boost-iosx"
@@ -36,6 +36,7 @@ Pod::Spec.new do |s|
     s.subspec 'all' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_atomic.xcframework", "frameworks/boost_charconv.xcframework", "frameworks/boost_chrono.xcframework", "frameworks/boost_cobalt.xcframework", "frameworks/boost_container.xcframework", "frameworks/boost_context.xcframework", "frameworks/boost_contract.xcframework", "frameworks/boost_coroutine.xcframework", "frameworks/boost_date_time.xcframework", "frameworks/boost_exception.xcframework", "frameworks/boost_fiber.xcframework", "frameworks/boost_filesystem.xcframework", "frameworks/boost_graph.xcframework", "frameworks/boost_iostreams.xcframework", "frameworks/boost_json.xcframework", "frameworks/boost_locale.xcframework", "frameworks/boost_log.xcframework", "frameworks/boost_log_setup.xcframework", "frameworks/boost_nowide.xcframework", "frameworks/boost_program_options.xcframework", "frameworks/boost_random.xcframework", "frameworks/boost_regex.xcframework", "frameworks/boost_serialization.xcframework", "frameworks/boost_stacktrace_basic.xcframework", "frameworks/boost_prg_exec_monitor.xcframework", "frameworks/boost_test_exec_monitor.xcframework", "frameworks/boost_unit_test_framework.xcframework", "frameworks/boost_thread.xcframework", "frameworks/boost_timer.xcframework", "frameworks/boost_type_erasure.xcframework", "frameworks/boost_url.xcframework", "frameworks/boost_wave.xcframework"
+        ss.resource_bundles = { "boost-iosx_privacy" => ["privacy/all/PrivacyInfo.xcprivacy"] }
     end
 
     s.subspec 'atomic' do |ss|
@@ -49,10 +50,12 @@ Pod::Spec.new do |s|
     s.subspec 'chrono' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_chrono.xcframework"
+        ss.resource_bundles = { "boost-iosx_chrono_privacy" => ["privacy/boot/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'cobalt' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_cobalt.xcframework"
+        ss.resource_bundles = { "boost-iosx_cobalt_privacy" => ["privacy/timestamps/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'container' do |ss|
         ss.preserve_paths = "frameworks/Headers"
@@ -85,6 +88,7 @@ Pod::Spec.new do |s|
     s.subspec 'filesystem' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_filesystem.xcframework"
+        ss.resource_bundles = { "boost-iosx_filesystem_privacy" => ["privacy/timestamps-disk/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'graph' do |ss|
         ss.preserve_paths = "frameworks/Headers"
@@ -93,6 +97,7 @@ Pod::Spec.new do |s|
     s.subspec 'iostreams' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_iostreams.xcframework"
+        ss.resource_bundles = { "boost-iosx_iostreams_privacy" => ["privacy/timestamps/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'json' do |ss|
         ss.preserve_paths = "frameworks/Headers"
@@ -105,6 +110,7 @@ Pod::Spec.new do |s|
     s.subspec 'log' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_log.xcframework", "frameworks/boost_log_setup.xcframework"
+        ss.resource_bundles = { "boost-iosx_log_privacy" => ["privacy/timestamps-boot/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'math_c99' do |ss|
         ss.preserve_paths = "frameworks/Headers"
@@ -165,6 +171,7 @@ Pod::Spec.new do |s|
     s.subspec 'test' do |ss|
         ss.preserve_paths = "frameworks/Headers"
         ss.vendored_frameworks = "frameworks/boost_prg_exec_monitor.xcframework", "frameworks/boost_test_exec_monitor.xcframework", "frameworks/boost_unit_test_framework.xcframework"
+        ss.resource_bundles = { "boost-iosx_test_privacy" => ["privacy/boot/PrivacyInfo.xcprivacy"] }
     end
     s.subspec 'thread' do |ss|
         ss.preserve_paths = "frameworks/Headers"
