@@ -1,5 +1,7 @@
 # Boost C++ for iOS, watchOS, tvOS, visionOS, macOS, Catalyst, Simulators - Intel(x86_64) / Apple Silicon(arm64)
 
+> **Now available through [otok](https://otok-dev.github.io/).** otok builds only the Boost libraries you choose from source on your machine, for the platforms of your app, and hands the result to Xcode as a local Swift package: see [Using otok](#using-otok-recommended). The build scripts and the CocoaPods pod described below remain available.
+
 Supported versions: [1.92.0](https://github.com/apotocki/boost-iosx/tree/1.92.0), [1.91.0](https://github.com/apotocki/boost-iosx/tree/1.91.0), [1.90.0](https://github.com/apotocki/boost-iosx/tree/1.90.0), [1.89.0](https://github.com/apotocki/boost-iosx/tree/1.89.0), [1.88.0](https://github.com/apotocki/boost-iosx/tree/1.88.0), [1.87.0](https://github.com/apotocki/boost-iosx/tree/1.87.0), [1.86.0](https://github.com/apotocki/boost-iosx/tree/1.86.0), [1.85.0](https://github.com/apotocki/boost-iosx/tree/1.85.0), [1.84.0](https://github.com/apotocki/boost-iosx/tree/1.84.0), [1.83.0](https://github.com/apotocki/boost-iosx/tree/1.83.0), [1.82.0](https://github.com/apotocki/boost-iosx/tree/1.82.0), [1.81.0](https://github.com/apotocki/boost-iosx/tree/1.81.0), [1.80.0](https://github.com/apotocki/boost-iosx/tree/1.80.0), [1.79.0](https://github.com/apotocki/boost-iosx/tree/1.79.0), [1.78.0](https://github.com/apotocki/boost-iosx/tree/1.78.0), [1.77.0](https://github.com/apotocki/boost-iosx/tree/1.77.0), [1.76.0](https://github.com/apotocki/boost-iosx/tree/1.76.0), [1.75.0](https://github.com/apotocki/boost-iosx/tree/1.75.0)
 
 
@@ -14,6 +16,37 @@ atomic, charconv, chrono, cobalt (requires apple clang-15.0.0 or later), contain
 
 ## Excluded Libraries
 graph_parallel, mpi, python
+
+## Using otok (recommended)
+
+[otok](https://otok-dev.github.io/) builds only the Boost libraries you choose from source on your machine, with your Xcode, for the platforms and deployment versions of your app, and gives the result to Xcode as a local Swift package of XCFrameworks. Install it (`brew install otok-dev/tap/otok`) and put an `otok.toml` next to your Xcode project:
+
+```toml
+[otok]
+format = 1
+
+[apple]
+platforms = ["ios", "iossim", "macosx"]
+deployment = { ios = "16.0", macos = "13.0" }
+
+[deps.boost]
+recipe = "apotocki/boost"
+version = "~> 1.92"
+options = { libraries = ["json", "log", "program_options"], icu = true }
+```
+
+```bash
+otok install
+```
+
+Then add the `Otok` directory to your app in Xcode (**File → Add Package Dependencies… → Add Local…**) and add `Boost` (the headers) and the products of the libraries you selected to your target.
+
+- `libraries` selects the compiled Boost libraries (`atomic`, `charconv`, `chrono`, `cobalt`, `container`, `context`, `contract`, `coroutine`, `date_time`, `exception`, `fiber`, `filesystem`, `graph`, `iostreams`, `json`, `locale`, `log`, `math`, `nowide`, `process`, `program_options`, `random`, `regex`, `serialization`, `stacktrace`, `test`, `thread`, `timer`, `type_erasure`, `url`, `wave`). Each becomes a product (`BoostJson`, `BoostLog`, `BoostProgramOptions`, ...) beside `Boost`, the headers; without any, Boost is its headers only. The Boost libraries a product needs come with it, so they need not be listed, unlike with `-l`.
+- `icu = true` builds ICU (the recipe `apotocki/icu4c`) as the backend of Boost.Locale and for the Unicode support of Boost.Regex.
+- Each product carries the privacy manifest its libraries need.
+- `platforms` takes `ios`, `iossim`, `macosx`, `catalyst`, `tvos`, `tvossim`, `watchos`, `watchossim`, `xros`, `xrossim`; `deployment` gives the minimum OS versions (`ios`, `macos`, `catalyst`, `tvos`, `watchos`, `visionos`) and is required for every platform built.
+- `otok.lock` pins the versions, the recipes and the sources by their hashes: commit it with `otok.toml`. `Otok/` is generated: add it to `.gitignore`.
+- The same recipe builds Boost for Android, Windows and Linux too. Its versions and options are in the [catalog](https://otok-dev.github.io/index/recipes/apotocki/boost/) (or `otok info apotocki/boost`); moving from the pod is described in [Coming from CocoaPods](https://otok-dev.github.io/start/from-cocoapods/).
 
 ## Prerequisites
 
