@@ -1,5 +1,7 @@
 # Boost C++ for iOS and Mac OS X (Intel & Apple Silicon M1) & Catalyst - arm64 / x86_64
 
+> **Boost is now available through [otok](https://otok-dev.github.io/)**, which builds it from source on your machine for the platforms of your app: see [Using otok](https://github.com/apotocki/boost-iosx/blob/master/README.md#using-otok-recommended) in the `master` branch. otok provides the current versions of Boost; this branch keeps the build scripts of Boost 1.78.0.
+
 Supported version: 1.78.0 (use the appropriate tag to select the version)
 
 This repo provides a universal script for building static Boost C++ libraries for use in iOS and Mac OS X & Catalyst applications.
